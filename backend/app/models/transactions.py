@@ -15,7 +15,7 @@ class Transaction(Base):
     amount = Column(Float, nullable=False)
     category = Column(String, nullable=False)
     date = Column(Date, nullable=False)
-    note = Column(String, nullable=True)
+    desc = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", backref="transactions")

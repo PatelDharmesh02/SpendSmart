@@ -7,14 +7,14 @@ class TransactionCreate(BaseModel):
     amount: float
     category: str
     date: date
-    note: Optional[str] = None
+    desc: Optional[str] = None
 
 class TransactionOut(BaseModel):
     id: UUID
     amount: float
     category: str
     date: date
-    note: Optional[str]
+    desc: Optional[str]
     created_at: datetime
 
     class Config:

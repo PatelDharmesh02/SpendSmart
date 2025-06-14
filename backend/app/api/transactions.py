@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.db.deps import get_db
@@ -9,20 +9,33 @@ from app.schemas.common import MessageResponse
 from app.models.user import User
 from typing import List
 from uuid import UUID
-from datetime import datetime
+from datetime import date, datetime
+from app.services.categorizer import auto_categorize_transaction
 
 router = APIRouter()
 
 @router.post("/", response_model=TransactionOut, status_code=201)
 def create_transaction(
     tx: TransactionCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    new_tx = Transaction(**tx.dict(), user_id=current_user.id)
+    category = tx.category.lower() or "auto"
+    new_tx = Transaction(
+        user_id=current_user.id,
+        desc=tx.desc,
+        amount=tx.amount,
+        date=tx.date or date.today(),
+        category=category
+    )
     db.add(new_tx)
     db.commit()
     db.refresh(new_tx)
+    
+    if(category == "auto"):
+        background_tasks.add_task(auto_categorize_transaction, new_tx.id)
+    
     return new_tx
 
 
