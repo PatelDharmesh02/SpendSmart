@@ -18,4 +18,12 @@ class TransactionOut(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+        
+class TransactionSummaryOut(BaseModel):
+    month: str
+    total_spent: float
+    category_breakdown: dict
+
+    class Config:
+        from_attributes = True

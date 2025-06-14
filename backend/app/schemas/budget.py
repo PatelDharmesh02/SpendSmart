@@ -15,4 +15,13 @@ class BudgetOut(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class BudgetCompare(BaseModel):
+    category: str  # "2025-06"
+    budgeted: float
+    spent: float
+    remaining: float
+
+    class Config:
+        from_attributes = True

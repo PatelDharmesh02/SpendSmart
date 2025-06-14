@@ -1,13 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from fastapi import Query
+from sqlalchemy import func
 from app.db.deps import get_db
 from app.api.deps import get_current_user
 from app.models.budgets import Budget
-from app.schemas.budget import BudgetCreate, BudgetOut
+from app.models.transactions import Transaction
+from app.schemas.budget import BudgetCreate, BudgetOut, BudgetCompare
 from app.schemas.common import MessageResponse
 from app.models.user import User
 from typing import List
 from uuid import UUID
+from datetime import datetime
 
 router = APIRouter()
 
@@ -17,7 +21,7 @@ def create_budget(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    new_budget = Budget(**budget.dict(), user_id=current_user.id)
+    new_budget = Budget(**budget.model_dump(), user_id=current_user.id)
     db.add(new_budget)
     db.commit()
     db.refresh(new_budget)
@@ -63,3 +67,55 @@ def delete_budget(
     db.delete(budget)
     db.commit()
     return {"message": "Budget deleted successfully!"}
+
+@router.get("/compare", response_model=List[BudgetCompare])
+def compare_budgets(
+    month: str = Query(..., description="Month in YYYY-MM format", example="2025-06"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    try:
+        start_date = datetime.strptime(month, "%Y-%m").date()
+        end_date = datetime(start_date.year, start_date.month + 1, 1).date() \
+            if(start_date.month != 12) else datetime(start_date.year + 1, 1, 1).date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid month format. Use YYYY-MM.")
+    
+    # Fetch budgets for the specified month
+    budgets = (
+        db.query(Budget)
+        .filter(
+            Budget.user_id == current_user.id,
+            Budget.month == month
+        )
+        .all()
+    )
+    
+    # Fetch spend per category for that month
+    tx_summary = (
+        db.query(Transaction.category, func.sum(Transaction.amount))
+        .filter(
+            Transaction.user_id == current_user.id,
+            Transaction.date >= start_date,
+            Transaction.date < end_date
+        )
+        .group_by(Transaction.category)
+        .all()
+    )
+    
+    # Map category -> spend
+    spent_by_category = {cat: amount for cat, amount in tx_summary}
+    
+    result = []
+    for b in budgets:
+        spent = spent_by_category.get(b.category, 0)
+        result.append(
+            BudgetCompare(
+                category=b.category,
+                budgeted=b.amount,
+                spent=spent,
+                remaining=b.amount - spent
+            )
+        )
+        
+    return result
