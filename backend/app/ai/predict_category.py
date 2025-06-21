@@ -1,26 +1,38 @@
 import re
-import openai
 import os
+from openai import OpenAI 
 from app.utils.constants import CATEGORIES, CATEGORY_RULES
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+def predict_category_with_ai(description: str, amount: float) -> str:
+    endpoint = "https://models.github.ai/inference"
+    model = "openai/gpt-4o"
 
-def predict_category_by_openai(description: str, amount: float) -> str:
+    client = OpenAI(
+        base_url=endpoint,
+        api_key=os.environ["OPENAI_API_KEY"],
+    )
+
     prompt = f"""
-        You are a smart financial assistant. Categorize this transaction.
-        Choose one of: {", ".join(CATEGORIES)}.
+            You are a smart financial assistant. Categorize this transaction.
+            Choose one of: {", ".join(CATEGORIES)}.
 
-        Transaction:
-        Description: "{description}"
-        Amount: ₹{amount}
+            Transaction:
+            Description: "{description}"
+            Amount: ₹{amount}
 
-        Category:"""
+            Category:"""
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4o-mini",
-        messages=[{ "role": "user", "content": prompt }],
-        temperature=0.2,
-        max_tokens=20,
+    response = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+        temperature=1,
+        top_p=1,
+        max_tokens=30,
+        model=model
     )
 
     category = response.choices[0].message.content.strip().lower()

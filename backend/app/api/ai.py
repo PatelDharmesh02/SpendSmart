@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-import openai
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.db.deps import get_db
@@ -8,8 +7,8 @@ from app.models.budgets import Budget
 from app.models.transactions import Transaction
 from app.models.user import User
 from datetime import datetime
-from app.services import build_prompt
 from app.services.summarizer import summarize_budgets, summarize_transactions
+from app.ai.ai_summary import generate_summary, generate_summary_with_ai
 
 router = APIRouter()
 
@@ -41,20 +40,16 @@ def get_monthly_summary(
 
     if not transactions:
         return { "summary": "No transactions found for this month." }
-
-    # 3. Prepare data for GPT
+    
     tx_summary = summarize_transactions(transactions)
     budget_data = summarize_budgets(budgets)
-
-    # 4. Generate prompt
-    prompt = build_prompt(month, tx_summary, budget_data)
-
-    # 5. Call GPT
-    gpt_response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{ "role": "user", "content": prompt }],
-        temperature=0.5,
-        max_tokens=300,
-    )
-
-    return { "summary": gpt_response.choices[0].message.content.strip() }
+    
+    try:
+        # Use AI to generate summary
+        summary = generate_summary_with_ai(month, tx_summary, budget_data)
+    except Exception as ai_error:
+        # Fallback to rule-based summary if AI fails
+        print(f"AI summary generation failed: {str(ai_error)}. Using fallback.")
+        summary = generate_summary(month, tx_summary, budget_data)
+    
+    return { "summary": summary }
