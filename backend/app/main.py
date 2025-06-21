@@ -2,6 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import router as api_router
+from app.db import init_db
 
 app = FastAPI(title="SpendSmart API", version="1.0")
 
@@ -18,6 +19,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+def startup_event():
+    # Initialize the database
+    init_db()
+
 
 app.include_router(api_router, prefix="/api/v1")
 
