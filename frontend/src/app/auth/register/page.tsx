@@ -256,8 +256,9 @@ export default function RegisterPage() {
       })).unwrap();
 
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+    } catch (err: unknown) {
+      if (err instanceof Error)
+        setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

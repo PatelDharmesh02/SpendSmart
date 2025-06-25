@@ -81,11 +81,9 @@ export const handleRegister = createAsyncThunk(
       const userResponse = await AxiosInstance.get("/auth/me");
       dispatch(loginUser(userResponse.data as UserResponse));
       return userResponse.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = "Registration failed";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
+      if (error instanceof Error) {
         errorMessage = error.message;
       }
       throw new Error(errorMessage);

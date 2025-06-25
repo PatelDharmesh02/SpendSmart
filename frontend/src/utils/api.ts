@@ -67,10 +67,10 @@ instance.interceptors.response.use(
     }
 
     // Extract meaningful error message
-    const errorMessage =
-      (error.response?.data as unknown)?.message ||
-      error.message ||
-      "An unexpected error occurred";
+    let errorMessage = "An unexpected error occurred";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
 
     return Promise.reject({
       ...error,

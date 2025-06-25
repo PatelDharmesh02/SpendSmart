@@ -35,7 +35,7 @@ export default function Home() {
 
   useEffect(() => {
     dispatch(checkAuth());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (!loading && isAuthenticated) {

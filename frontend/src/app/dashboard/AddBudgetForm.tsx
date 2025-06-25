@@ -63,6 +63,9 @@ export default function AddBudgetForm({ onSuccess }: AddBudgetFormProps) {
         // In a real app, you would submit to your API here
         console.log({ category, amount, period });
         onSuccess();
+        //needs to be changed later
+        setLoading(false);
+        setError('')
     };
 
     return (
