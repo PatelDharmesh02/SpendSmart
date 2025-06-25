@@ -38,8 +38,10 @@ export default function Home() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (!loading && isAuthenticated) {
-      router.push(isAuthenticated ? "/dashboard" : "/auth/login");
+    if (isAuthenticated) {
+      router.push('/dashboard')
+    } else if (!loading && !isAuthenticated) {
+      router.push('/auth/login')
     }
   }, [loading, isAuthenticated, router]);
 

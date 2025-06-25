@@ -9,7 +9,7 @@ app = FastAPI(title="SpendSmart API", version="1.0")
 # Allow frontend calls (React dev server or Vercel)
 origins = [
     "http://localhost:3000",
-    "https://spendsmart.vercel.app"
+    "https://spend-smart-frontend-six.vercel.app/"
 ]
 
 app.add_middleware(
