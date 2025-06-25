@@ -1,42 +1,44 @@
 import styled, { keyframes } from 'styled-components';
-import { theme } from '@/styles/theme';
-
-interface LoaderProps {
-    size?: keyof typeof theme.light.spacing;
-    loaderText?: string;
-}
 
 const spin = keyframes`
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 `;
 
-const LoaderContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
+const LoaderContainer = styled.div<{ size?: 'sm' | 'md' | 'lg' }>`
+  display: inline-block;
+  width: ${({ size }) =>
+    size === 'sm' ? '20px' :
+      size === 'md' ? '40px' : '60px'};
+  height: ${({ size }) =>
+    size === 'sm' ? '20px' :
+      size === 'md' ? '40px' : '60px'};
+  
+  &:after {
+    content: " ";
+    display: block;
+    width: ${({ size }) =>
+    size === 'sm' ? '16px' :
+      size === 'md' ? '32px' : '48px'};
+    height: ${({ size }) =>
+    size === 'sm' ? '16px' :
+      size === 'md' ? '32px' : '48px'};
+    border-radius: 50%;
+    border: ${({ size }) =>
+    size === 'sm' ? '2px' :
+      size === 'md' ? '4px' : '6px'} 
+      solid ${({ theme }) => theme.primary};
+    border-color: ${({ theme }) => theme.primary} transparent ${({ theme }) => theme.primary} transparent;
+    animation: ${spin} 1.2s linear infinite;
+  }
 `;
 
-const LoaderSpinner = styled.div<{ $size: keyof typeof theme.light.spacing }>`
-  border: 4px solid ${({ theme }) => theme.primaryDark};
-  border-top: 4px solid ${({ theme }) => theme.primaryLight};
-  border-radius: 50%;
-  width: ${({ theme, $size }) => theme.spacing[$size]};
-  height: ${({ theme, $size }) => theme.spacing[$size]};
-  animation: ${spin} 1s linear infinite;
-`;
-
-const LoaderText = styled.p`
-  margin-top: 10px;
-`;
-
-export default function Loader({ size = 'xl', loaderText = 'Loading...' }: LoaderProps) {
-    return (
-        <LoaderContainer>
-            <LoaderSpinner $size={size} />
-            <LoaderText>{loaderText}</LoaderText>
-        </LoaderContainer>
-    );
+interface LoaderProps {
+  size?: 'sm' | 'md' | 'lg';
 }
+
+const Loader = ({ size = 'md' }: LoaderProps) => {
+  return <LoaderContainer size={size} />;
+};
+
+export default Loader;

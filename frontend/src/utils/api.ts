@@ -3,7 +3,7 @@ import axios, {
   AxiosInstance,
   AxiosRequestConfig,
   AxiosResponse,
-  InternalAxiosRequestConfig
+  InternalAxiosRequestConfig,
 } from "axios";
 
 // Extend config for retry tracking
@@ -12,9 +12,10 @@ interface CustomAxiosConfig extends AxiosRequestConfig {
 }
 
 // Determine base URL
-const baseURL = process.env.NEXT_PUBLIC_API_URL
-  ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
-  : "http://localhost:5000/api/v1";
+const baseURL =
+  process.env.NEXT_PUBLIC_APP_ENV === "production"
+    ? process.env.NEXT_PUBLIC_API_URL_PROD
+    : process.env.NEXT_PUBLIC_API_URL_DEV || "http://localhost:5000/api/v1";
 
 // Create Axios instance
 const instance: AxiosInstance = axios.create({
@@ -24,7 +25,6 @@ const instance: AxiosInstance = axios.create({
     "Content-Type": "application/json",
     Accept: "application/json",
   },
-  timeout: 10000, // 10 seconds timeout
 });
 
 // Request interceptor
@@ -56,7 +56,7 @@ instance.interceptors.response.use(
         localStorage.removeItem("token");
 
         if (!window.location.pathname.startsWith("/auth/login")) {
-          window.location.href = "/auth/login?session_expired=true";
+          window.location.href = "/auth/login";
         }
       }
     }

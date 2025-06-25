@@ -1,4 +1,3 @@
-// src/lib/ThemeRegistry.tsx
 'use client';
 
 import { useState, useEffect, createContext, useContext } from 'react';

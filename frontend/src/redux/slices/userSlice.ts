@@ -1,15 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-
-export type UserState = {
-  email: string | null;
-  name: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-};
+import { UserState, UserResponse } from "@/types/user.types";
 
 const initialState: UserState = {
+  id: null,
   email: null,
   name: null,
   isAuthenticated: false,
@@ -27,15 +21,14 @@ const userSlice = createSlice({
     setUserError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
-    loginUser: (
-      state,
-      action: PayloadAction<{ email: string; name: string }>
-    ) => {
+    loginUser: (state, action: PayloadAction<UserResponse>) => {
+      state.id = action.payload.id;
       state.email = action.payload.email;
       state.name = action.payload.name;
       state.isAuthenticated = true;
     },
     logoutUser: (state) => {
+      state.id = null;
       state.email = null;
       state.name = null;
       state.isAuthenticated = false;
