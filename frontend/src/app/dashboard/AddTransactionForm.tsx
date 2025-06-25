@@ -57,6 +57,9 @@ export default function AddTransactionForm({ onSuccess }: AddTransactionFormProp
         // In a real app, you would submit to your API here
         console.log({ amount, description, category, date });
         onSuccess();
+        //Need to change later
+        setLoading(false);
+        setError('');
     };
 
     return (
