@@ -63,7 +63,7 @@ const AnimatedElement = styled.div<{
 
 const FinancialAnalyticsAnimation = () => {
     const theme = useTheme() as AppTheme;
-    const [elements, setElements] = useState<JSX.Element[]>([]);
+    const [elements, setElements] = useState<React.ReactElement[]>([]);
 
     useEffect(() => {
         const createElements = () => {

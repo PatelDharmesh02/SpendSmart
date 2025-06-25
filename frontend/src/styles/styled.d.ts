@@ -3,6 +3,6 @@ import { ThemeType } from "@/styles/theme";
 
 declare module "styled-components" {
   export interface DefaultTheme extends ThemeType {
-    theme: object;
+    theme?: object;
   }
 }
