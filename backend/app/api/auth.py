@@ -10,7 +10,7 @@ from app.api.deps import get_current_user
 
 router = APIRouter()
 
-@router.post("/register", status_code=status.HTTP_201_CREATED, response_model = UserPublic)
+@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=Token)
 def register(user: UserRegister, db: Session = Depends(get_db)):
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == user.email).first()
@@ -30,12 +30,11 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    return {
-        "id": new_user.id,
-        "email": new_user.email,
-        "name": new_user.name,
-        "created_at": new_user.created_at
-    }
+    # Generate token
+    token = create_access_token(data={"sub": str(new_user.id)}, expires_delta=timedelta(minutes=60))
+    if not token:
+        raise HTTPException(status_code=500, detail="Could not create access token")
+    return {"access_token": token}
     
 
 @router.post("/login", response_model=Token)
