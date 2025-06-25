@@ -11,6 +11,9 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "SpendSmart",
   description: "AI-powered personal budgeting & finance dashboard",
+  icons: {
+    icon: "/favicon.svg"
+  }
 };
 
 export default function RootLayout({

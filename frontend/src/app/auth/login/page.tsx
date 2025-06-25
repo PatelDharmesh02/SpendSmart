@@ -236,7 +236,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      await dispatch(handleLogin({ email, password })).unwrap();
+      await dispatch(handleLogin({ email, password }));
       router.push('/dashboard');
     } catch (err: unknown) {
       if (err instanceof Error) {

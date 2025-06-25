@@ -1,11 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import AxiosInstance from "@/utils/api";
-import {
-  loginUser,
-  setUserError,
-  setUserLoading,
-  logoutUser,
-} from "./slices/userSlice";
+import { loginUser, setUserError, setUserLoading } from "./slices/userSlice";
 import {
   LoginUserPayload,
   RegisterUserPayload,
@@ -42,24 +37,9 @@ export const handleLogin = createAsyncThunk(
     } catch (error) {
       if (error instanceof Error) {
         dispatch(setUserError("Login failed: " + error.message));
+        throw new Error("Login failed");
       }
-    } finally {
-      dispatch(setUserLoading(false));
-    }
-  }
-);
-
-export const handleLogout = createAsyncThunk(
-  "user/logoutUser",
-  async (_, { dispatch }) => {
-    dispatch(setUserLoading(true));
-    try {
-      localStorage.removeItem("token");
-      dispatch(logoutUser());
-    } catch (error) {
-      if (error instanceof Error) {
-        dispatch(setUserError("Logout failed: " + error.message));
-      }
+      throw new Error("Login failed");
     } finally {
       dispatch(setUserLoading(false));
     }

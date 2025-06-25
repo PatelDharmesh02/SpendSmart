@@ -1,6 +1,6 @@
 import React from 'react';
 import styled, { useTheme } from 'styled-components';
-import { PresentionChart, AddCircle } from 'iconsax-react';
+import { PresentionChart, AddCircle, LogoutCurve } from 'iconsax-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/Button';
 import { userNameSelector } from '@/redux/slices/userSlice';
@@ -63,9 +63,10 @@ const Avatar = styled.div`
 interface HeaderProps {
     onAddTransaction?: () => void;
     onAddBudget?: () => void;
+    handleLogout?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onAddTransaction, onAddBudget }) => {
+const Header: React.FC<HeaderProps> = ({ onAddTransaction, onAddBudget, handleLogout }) => {
     const theme = useTheme();
     const userName = useAppSelector(userNameSelector);
     return (
@@ -86,6 +87,9 @@ const Header: React.FC<HeaderProps> = ({ onAddTransaction, onAddBudget }) => {
                 <Avatar>
                     {userName ? userName.charAt(0).toUpperCase() : 'U'}
                 </Avatar>
+                <ButtonWrapper $variant='primary' onClick={handleLogout}>
+                    <LogoutCurve size="24" color={theme.surface} variant='Outline' />
+                </ButtonWrapper>
                 <ThemeToggle />
             </HeaderActionContainer>
         </HeaderContainer>

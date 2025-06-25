@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { handleRegister, checkAuth } from '@/redux/thunk';
+import { handleRegister } from '@/redux/thunk';
 import { userAuthenticatedSelector, userLoadingSelector } from '@/redux/slices/userSlice';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
@@ -273,10 +273,6 @@ export default function RegisterPage() {
   };
 
   const passwordValidations = validatePassword(formData.password);
-
-  useEffect(() => {
-    dispatch(checkAuth());
-  }, [dispatch]);
 
   useEffect(() => {
     if (isAuthenticated) {

@@ -1,6 +1,8 @@
 'use client';
 import React, { useState } from 'react';
 import styled, { useTheme } from 'styled-components';
+import { useAppDispatch } from '@/redux/hooks';
+import { logoutUser, setUserError } from '@/redux/slices/userSlice';
 import Header from '@/components/Header';
 import DashboardCard from './DashboardCard';
 import BudgetSummary from './BudgetSummary';
@@ -11,6 +13,7 @@ import BudgetsOverview from './BudgetOverview';
 import Modal from '@/components/Modal';
 import AddTransactionForm from './AddTransactionForm';
 import AddBudgetForm from './AddBudgetForm';
+import { useRouter } from 'next/navigation';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -63,6 +66,8 @@ export default function DashboardPage() {
     const theme = useTheme();
     const [showTransactionModal, setShowTransactionModal] = useState(false);
     const [showBudgetModal, setShowBudgetModal] = useState(false);
+    const dispatch = useAppDispatch();
+    const router = useRouter();
 
     // Mock data - in a real app, this would come from your API
     const budgetData = {
@@ -90,12 +95,26 @@ export default function DashboardPage() {
         { category: 'Utilities', budgeted: 8500, spent: 8000 }
     ];
 
+    const handleLogout = () => {
+        try {
+            localStorage.removeItem("token");
+            dispatch(logoutUser());
+        } catch (error) {
+            if (error instanceof Error) {
+                dispatch(setUserError("Logout failed: " + error.message));
+            }
+        } finally {
+            router.push('/auth/login')
+        }
+    }
+
     return (
         <DashboardContainer>
             <MainContent>
                 <Header
                     onAddTransaction={() => setShowTransactionModal(true)}
                     onAddBudget={() => setShowBudgetModal(true)}
+                    handleLogout={handleLogout}
                 />
                 <ContentWrapper>
                     <PageContent>
