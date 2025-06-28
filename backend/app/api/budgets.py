@@ -21,7 +21,7 @@ def create_budget(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    new_budget = Budget(**budget.model_dump(), user_id=current_user.id)
+    new_budget = Budget(**budget.model_dump(), user_id=current_user.id , category=budget.category.lower())
     db.add(new_budget)
     db.commit()
     db.refresh(new_budget)
