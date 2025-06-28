@@ -26,36 +26,36 @@ const Container = styled.div`
 `;
 
 const AnimatedElement = styled.div<{
-    color: string;
-    size: string;
+    $color: string;
+    $size: string;
     $left: string;
     $top: string;
     $delay: string;
-    type: 'circle' | 'bar' | 'line';
-    opacity: number;
+    $type: 'circle' | 'bar' | 'line';
+    $opacity: number;
 }>`
   position: absolute;
   left: ${props => props.$left};
   top: ${props => props.$top};
-  width: ${props => props.size};
+  width: ${props => props.$size};
   height: ${props =>
-        props.type === 'bar'
-            ? props.size
-            : props.type === 'line'
+        props.$type === 'bar'
+            ? props.$size
+            : props.$type === 'line'
                 ? '2px'
-                : props.size};
+                : props.$size};
   background: ${props => props.color};
   border-radius: ${props =>
-        props.type === 'circle'
+        props.$type === 'circle'
             ? '50%'
-            : props.type === 'bar'
+            : props.$type === 'bar'
                 ? '4px 4px 0 0'
                 : '2px'};
-  opacity: ${props => props.opacity};
+  opacity: ${props => props.$opacity};
   filter: blur(0px); // set to blur(2px) for softer look once working
 
   ${props =>
-        props.type === 'circle'
+        props.$type === 'circle'
             ? css`animation: ${pulse} 8s ease-in-out infinite;`
             : css`animation: ${float} 8s ease-in-out infinite;`}
   animation-delay: ${props => props.$delay};
@@ -90,13 +90,13 @@ const FinancialAnalyticsAnimation = () => {
                 newElements.push(
                     <AnimatedElement
                         key={i}
-                        color={color}
-                        size={size}
+                        $color={color}
+                        $size={size}
                         $left={`${Math.random() * 100}%`}
                         $top={`${Math.random() * 100}%`}
                         $delay={`${Math.random() * 5}s`}
-                        type={type}
-                        opacity={0.3 + Math.random() * 0.3}
+                        $type={type}
+                        $opacity={0.3 + Math.random() * 0.3}
                     />
                 );
             }

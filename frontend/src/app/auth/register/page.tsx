@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { useTheme } from 'styled-components';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { handleRegister } from '@/redux/thunk';
@@ -114,8 +114,8 @@ const OAuthButton = styled(Button)`
   color: ${({ theme }) => theme.textPrimary || '#000'};
   border: 1px solid ${({ theme }) => theme.border || '#ccc'};
 
-  &:hover {
-    background: ${({ theme }) => theme.surfaceElevated || '#eaeaea'};
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.primaryLight || '#eaeaea'};
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadow?.md};
   }
@@ -206,6 +206,20 @@ const LoaderWrapper = styled.div`
   width: 100vw;
 `
 
+const passwordRequirements = [
+  { id: 1, text: 'At least 8 characters', regex: /.{8,}/ },
+  { id: 2, text: 'At least one uppercase letter', regex: /[A-Z]/ },
+  { id: 3, text: 'At least one number', regex: /[0-9]/ },
+  { id: 4, text: 'At least one special character', regex: /[^A-Za-z0-9]/ }
+];
+
+const validatePassword = (password: string) => {
+  return passwordRequirements.map(req => ({
+    ...req,
+    valid: req.regex.test(password)
+  }));
+};
+
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
     name: '',
@@ -221,21 +235,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const isAuthenticated = useAppSelector(userAuthenticatedSelector);
   const isLoading = useAppSelector(userLoadingSelector)
-
-
-  const passwordRequirements = [
-    { id: 1, text: 'At least 8 characters', regex: /.{8,}/ },
-    { id: 2, text: 'At least one uppercase letter', regex: /[A-Z]/ },
-    { id: 3, text: 'At least one number', regex: /[0-9]/ },
-    { id: 4, text: 'At least one special character', regex: /[^A-Za-z0-9]/ }
-  ];
-
-  const validatePassword = (password: string) => {
-    return passwordRequirements.map(req => ({
-      ...req,
-      valid: req.regex.test(password)
-    }));
-  };
+  const theme = useTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -341,14 +341,14 @@ export default function RegisterPage() {
                   onClick={() => setShowPassword((prev) => !prev)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? <EyeSlash size="20" /> : <Eye size="20" />}
+                  {showPassword ? <EyeSlash size="20" color={theme.textPrimary} /> : <Eye size="20" color={theme.textPrimary} />}
                 </PasswordToggleBtn>
               </PasswordInputWrapper>
 
               <PasswordRequirements>
                 {passwordValidations.map(req => (
                   <Requirement key={req.id} $valid={req.valid}>
-                    <TickCircle size="16" variant={req.valid ? "Bold" : "Linear"} />
+                    <TickCircle size="16" color={req.valid ? theme.success : theme.warning} variant={req.valid ? "Bold" : "Linear"} />
                     <span>{req.text}</span>
                   </Requirement>
                 ))}
@@ -372,7 +372,7 @@ export default function RegisterPage() {
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
                   aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? <EyeSlash size="20" color="#888" /> : <Eye size="20" color="#888" />}
+                  {showConfirmPassword ? <EyeSlash size="20" color={theme.textPrimary} /> : <Eye size="20" color={theme.textPrimary} />}
                 </PasswordToggleBtn>
               </PasswordInputWrapper>
             </FormGroup>

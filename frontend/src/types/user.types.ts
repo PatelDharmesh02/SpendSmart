@@ -1,6 +1,7 @@
 export type LoginUserPayload = {
   email: string;
   password: string;
+  routeHandler?: (route: string) => void;
 };
 
 export type RegisterUserPayload = {

@@ -115,8 +115,8 @@ const OAuthButton = styled(Button)`
   color: ${({ theme }) => theme.textPrimary || '#000'};
   border: 1px solid ${({ theme }) => theme.border || '#ccc'};
 
-  &:hover {
-    background: ${({ theme }) => theme.surfaceElevated || '#eaeaea'};
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.primaryLight || '#eaeaea'};
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadow?.md};
   }
@@ -230,14 +230,16 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, router]);
 
+  const routeHandler = () => {
+    router.push("/dashboard");
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
-      await dispatch(handleLogin({ email, password }));
-      router.push('/dashboard');
+      await dispatch(handleLogin({ email, password, routeHandler }));
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || 'Login failed. Please try again.');
@@ -294,7 +296,7 @@ export default function LoginPage() {
                   onClick={() => setShowPassword((prev) => !prev)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? <EyeSlash size="20" color="#888" /> : <Eye size="20" color="#888" />}
+                  {showPassword ? <EyeSlash size="20" color={theme.textPrimary} /> : <Eye size="20" color={theme.textPrimary} />}
                 </PasswordToggleBtn>
               </PasswordInputWrapper>
             </FormGroup>

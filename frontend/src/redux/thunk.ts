@@ -1,4 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import { AxiosError } from "axios";
 import AxiosInstance from "@/utils/api";
 import { loginUser, setUserError, setUserLoading } from "./slices/userSlice";
 import {
@@ -26,7 +27,7 @@ export const checkAuth = createAsyncThunk(
 
 export const handleLogin = createAsyncThunk(
   "user/loginUser",
-  async ({ email, password }: LoginUserPayload, { dispatch }) => {
+  async ({ email, password, routeHandler }: LoginUserPayload, { dispatch }) => {
     dispatch(setUserLoading(true));
     try {
       const res = await AxiosInstance.post("/auth/login", { email, password });
@@ -34,12 +35,13 @@ export const handleLogin = createAsyncThunk(
       localStorage.setItem("token", authToken);
       const userResponse = await AxiosInstance.get("/auth/me");
       dispatch(loginUser(userResponse.data as UserResponse));
-    } catch (error) {
-      if (error instanceof Error) {
+      routeHandler?.("/dashboard");
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
         dispatch(setUserError("Login failed: " + error.message));
-        throw new Error("Login failed");
+      } else {
+        throw new Error("Login Failed!!");
       }
-      throw new Error("Login failed");
     } finally {
       dispatch(setUserLoading(false));
     }
