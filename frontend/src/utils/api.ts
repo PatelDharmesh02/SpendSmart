@@ -1,7 +1,6 @@
 import axios, {
   AxiosError,
   AxiosInstance,
-  AxiosRequestConfig,
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
@@ -41,7 +40,7 @@ instance.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     // Create standardized error object
-    const errorData = error.response?.data as any;
+    const errorData = error.response?.data as Record<string, unknown>;
     const statusCode = error.response?.status;
 
     // Extract meaningful error message from various sources
@@ -49,7 +48,7 @@ instance.interceptors.response.use(
 
     // Try to get message from response data
     if (errorData?.detail) {
-      errorMessage = errorData.detail;
+      errorMessage = errorData.detail as string;
     }
     // Try to get error from standard error message
     else if (error.message) {
@@ -63,7 +62,7 @@ instance.interceptors.response.use(
       }
     }
     // Handle validation errors (typical 400 Bad Request with field errors)
-    let fieldErrors = {};
+    let fieldErrors: Record<string, unknown> = {};
     if (statusCode === 400 || statusCode === 422) {
       if (errorData?.detail) {
         fieldErrors = errorData;

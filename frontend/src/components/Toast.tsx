@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import styled, { keyframes, useTheme } from "styled-components";
 import { CloseCircle } from "iconsax-react";
 
@@ -98,7 +98,7 @@ const Toast: React.FC<ToastProps> = ({ message, onClose }) => {
   const { id, type, message: content, duration = 3000 } = message;
   const theme = useTheme();
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (isClosing) return;
 
     setIsClosing(true);
@@ -106,7 +106,7 @@ const Toast: React.FC<ToastProps> = ({ message, onClose }) => {
       setIsVisible(false);
       onClose(id);
     }, 300);
-  };
+  }, [id, isClosing, onClose]);
 
   useEffect(() => {
     if (duration) {

@@ -16,11 +16,7 @@ import AddBudgetForm from "./AddBudgetForm";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/lib/ToasteContext";
 import { checkAuth } from "@/redux/thunk";
-import {
-  AppError,
-  handleErrorWithoutHook,
-  parseError,
-} from "@/utils/errorHandler";
+import { AppError, handleErrorWithoutHook } from "@/utils/errorHandler";
 
 const DashboardContainer = styled.div`
   display: flex;
