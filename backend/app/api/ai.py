@@ -23,7 +23,7 @@ def get_monthly_summary(
         end_date = datetime(start_date.year, start_date.month + 1, 1).date() \
             if start_date.month != 12 else datetime(start_date.year + 1, 1, 1).date()
     except:
-        raise HTTPException(400, "Invalid month format")
+        raise HTTPException(status_code=400, detail="Invalid month format")
 
     # 1. Fetch transactions
     transactions = db.query(Transaction).filter(

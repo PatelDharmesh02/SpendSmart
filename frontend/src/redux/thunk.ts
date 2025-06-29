@@ -1,5 +1,4 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { AxiosError } from "axios";
 import AxiosInstance from "@/utils/api";
 import { loginUser, setUserError, setUserLoading } from "./slices/userSlice";
 import {
@@ -7,6 +6,7 @@ import {
   RegisterUserPayload,
   UserResponse,
 } from "@/types/user.types";
+import { AppError, parseError } from "@/utils/errorHandler";
 
 export const checkAuth = createAsyncThunk(
   "user/checkAuth",
@@ -15,10 +15,12 @@ export const checkAuth = createAsyncThunk(
     try {
       const response = await AxiosInstance.get("/auth/me");
       dispatch(loginUser(response.data as UserResponse));
+      return response.data;
     } catch (error) {
-      if (error instanceof Error) {
-        dispatch(setUserError("Failed to fetch user data: " + error.message));
-      }
+      const appError = parseError(error);
+      dispatch(setUserError(`Failed to fetch user data: ${appError.message}`));
+      // Explicitly throw to allow error handling with unwrap()
+      throw appError as AppError;
     } finally {
       dispatch(setUserLoading(false));
     }
@@ -36,12 +38,15 @@ export const handleLogin = createAsyncThunk(
       const userResponse = await AxiosInstance.get("/auth/me");
       dispatch(loginUser(userResponse.data as UserResponse));
       routeHandler?.("/dashboard");
+      
+      return userResponse.data;
     } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        dispatch(setUserError("Login failed: " + error.message));
-      } else {
-        throw new Error("Login Failed!!");
-      }
+      // Use our error parsing utility
+      const appError = parseError(error);
+      dispatch(setUserError(`Login failed: ${appError.message}`));
+
+      // Explicitly throw to allow error handling with unwrap()
+      throw appError as AppError;
     } finally {
       dispatch(setUserLoading(false));
     }
@@ -64,11 +69,12 @@ export const handleRegister = createAsyncThunk(
       dispatch(loginUser(userResponse.data as UserResponse));
       return userResponse.data;
     } catch (error: unknown) {
-      let errorMessage = "Registration failed";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      throw new Error(errorMessage);
+      // Use our error parsing utility for consistent error handling
+      const appError = parseError(error);
+      dispatch(setUserError(`Registration failed: ${appError.message}`));
+
+      // Explicitly throw to allow error handling with unwrap()
+      throw appError as AppError;
     } finally {
       dispatch(setUserLoading(false));
     }

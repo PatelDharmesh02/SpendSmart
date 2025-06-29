@@ -5,6 +5,7 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
+import { AppError } from "./errorHandler";
 
 // Extend config for retry tracking
 interface CustomAxiosConfig extends AxiosRequestConfig {
@@ -47,8 +48,7 @@ instance.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosConfig;
-
-    // Handle 401 Unauthorized
+    // Handle 401 Unauthorized - logout and redirect
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -61,22 +61,46 @@ instance.interceptors.response.use(
       }
     }
 
-    // Handle timeout error
-    if (error.code === "ECONNABORTED") {
-      console.error("Request timeout. Please check your connection.");
-    }
+    // Create standardized error object
+    const errorData = error.response?.data as any;
+    const statusCode = error.response?.status;
 
-    // Extract meaningful error message
+    // Extract meaningful error message from various sources
     let errorMessage = "An unexpected error occurred";
-    if (error instanceof Error) {
+
+    // Try to get message from response data
+    if (errorData?.detail) {
+      errorMessage = errorData.detail;
+    }
+    // Try to get error from standard error message
+    else if (error.message) {
       errorMessage = error.message;
+
+      // Clean up axios error messages
+      if (errorMessage.includes("Network Error")) {
+        errorMessage = "Network error. Please check your connection.";
+      } else if (errorMessage.includes("timeout")) {
+        errorMessage = "Request timed out. Please try again.";
+      }
     }
 
+    // Handle validation errors (typical 400 Bad Request with field errors)
+    let fieldErrors = {};
+    if (statusCode === 400 || statusCode === 422) {
+      if (errorData?.detail) {
+        fieldErrors = errorData;
+      }
+    }
+
+    // Create a structured error response that's easier to handle in UI
     return Promise.reject({
-      ...error,
       message: errorMessage,
-      status: error.response?.status,
-    });
+      type: "api",
+      status: statusCode,
+      data: errorData,
+      fieldErrors,
+      originalError: error,
+    } as AppError);
   }
 );
 
