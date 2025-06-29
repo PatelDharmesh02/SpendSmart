@@ -16,32 +16,33 @@ interface ToastProps {
   onClose: (id: string) => void;
 }
 
-const fadeIn = keyframes`
+// Animations for the toasts
+const slideIn = keyframes`
   from { 
     opacity: 0; 
-    transform: translateY(${({ theme }) => theme.spacing.md}); 
+    transform: translateX(100%); 
   }
   to { 
     opacity: 1; 
-    transform: translateY(0); 
+    transform: translateX(0); 
   }
 `;
 
-const fadeOut = keyframes`
+const slideOut = keyframes`
   from { 
     opacity: 1; 
-    transform: translateY(0); 
+    transform: translateX(0); 
   }
   to { 
     opacity: 0; 
-    transform: translateY(${({ theme }) => theme.spacing.md}); 
+    transform: translateX(100%); 
   }
 `;
 
 // Using $isClosing as transient prop to avoid React DOM warnings
 const ToastWrapper = styled.div<{
   type: ToastType;
-  $isClosing: boolean; // Changed to $isClosing to make it transient
+  $isClosing: boolean;
 }>`
   padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
   border-radius: ${({ theme }) => theme.radius.md};
@@ -52,7 +53,7 @@ const ToastWrapper = styled.div<{
   align-items: center;
   justify-content: space-between;
   box-shadow: ${({ theme }) => theme.shadow.md};
-  animation: ${({ $isClosing }) => ($isClosing ? fadeOut : fadeIn)} 0.3s
+  animation: ${({ $isClosing }) => ($isClosing ? slideOut : slideIn)} 0.3s
     ease-in-out;
   background-color: ${({ type, theme }) => {
     switch (type) {
@@ -94,17 +95,8 @@ const CloseButton = styled.button`
 const Toast: React.FC<ToastProps> = ({ message, onClose }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
-  const { id, type, message: content, duration = 6000 } = message;
+  const { id, type, message: content, duration = 3000 } = message;
   const theme = useTheme();
-
-  useEffect(() => {
-    if (duration) {
-      const timer = setTimeout(() => {
-        handleClose();
-      }, duration);
-      return () => clearTimeout(timer);
-    }
-  }, [duration]);
 
   const handleClose = () => {
     if (isClosing) return;
@@ -113,15 +105,24 @@ const Toast: React.FC<ToastProps> = ({ message, onClose }) => {
     setTimeout(() => {
       setIsVisible(false);
       onClose(id);
-    }, 300); // Match this with the fadeOut animation duration
+    }, 300);
   };
+
+  useEffect(() => {
+    if (duration) {
+      const timer = setTimeout(() => {
+        handleClose();
+      }, duration);
+      return () => clearTimeout(timer);
+    }
+  }, [duration, handleClose]);
 
   if (!isVisible) return null;
 
   return (
     <ToastWrapper
       type={type}
-      $isClosing={isClosing} // Changed to $isClosing to match the transient prop name
+      $isClosing={isClosing}
       role="alert"
       aria-live="assertive"
     >

@@ -16,7 +16,7 @@ export const checkAuth = createAsyncThunk(
       const response = await AxiosInstance.get("/auth/me");
       dispatch(loginUser(response.data as UserResponse));
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       const appError = parseError(error);
       dispatch(setUserError(`Failed to fetch user data: ${appError.message}`));
       // Explicitly throw to allow error handling with unwrap()
@@ -38,7 +38,7 @@ export const handleLogin = createAsyncThunk(
       const userResponse = await AxiosInstance.get("/auth/me");
       dispatch(loginUser(userResponse.data as UserResponse));
       routeHandler?.("/dashboard");
-      
+
       return userResponse.data;
     } catch (error: unknown) {
       // Use our error parsing utility
@@ -55,7 +55,10 @@ export const handleLogin = createAsyncThunk(
 
 export const handleRegister = createAsyncThunk(
   "user/registerUser",
-  async ({ name, email, password }: RegisterUserPayload, { dispatch }) => {
+  async (
+    { name, email, password, routeHandler }: RegisterUserPayload,
+    { dispatch }
+  ) => {
     dispatch(setUserLoading(true));
     try {
       const res = await AxiosInstance.post("/auth/register", {
@@ -67,6 +70,7 @@ export const handleRegister = createAsyncThunk(
       localStorage.setItem("token", authToken);
       const userResponse = await AxiosInstance.get("/auth/me");
       dispatch(loginUser(userResponse.data as UserResponse));
+      routeHandler?.("/dashboard");
       return userResponse.data;
     } catch (error: unknown) {
       // Use our error parsing utility for consistent error handling

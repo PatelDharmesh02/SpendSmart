@@ -8,6 +8,7 @@ export type RegisterUserPayload = {
   name: string;
   email: string;
   password: string;
+  routeHandler?: (route: string) => void;
 };
 
 export type UserResponse = {

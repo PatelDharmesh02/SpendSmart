@@ -7,18 +7,11 @@ import axios, {
 } from "axios";
 import { AppError } from "./errorHandler";
 
-// Extend config for retry tracking
-interface CustomAxiosConfig extends AxiosRequestConfig {
-  _retry?: boolean;
-}
-
-// Determine base URL
 const baseURL =
   process.env.NEXT_PUBLIC_APP_ENV === "production"
     ? process.env.NEXT_PUBLIC_API_URL_PROD
     : process.env.NEXT_PUBLIC_API_URL_DEV || "http://localhost:5000/api/v1";
 
-// Create Axios instance
 const instance: AxiosInstance = axios.create({
   baseURL,
   withCredentials: true,
@@ -47,20 +40,6 @@ instance.interceptors.request.use(
 instance.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as CustomAxiosConfig;
-    // Handle 401 Unauthorized - logout and redirect
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("token");
-
-        if (!window.location.pathname.startsWith("/auth/login")) {
-          window.location.href = "/auth/login";
-        }
-      }
-    }
-
     // Create standardized error object
     const errorData = error.response?.data as any;
     const statusCode = error.response?.status;
@@ -83,7 +62,6 @@ instance.interceptors.response.use(
         errorMessage = "Request timed out. Please try again.";
       }
     }
-
     // Handle validation errors (typical 400 Bad Request with field errors)
     let fieldErrors = {};
     if (statusCode === 400 || statusCode === 422) {

@@ -8,5 +8,6 @@ export const validateBudgetDetails = ({ category, amount, month }: Budget) => {
 
 export const isValidMonthYear = (monthYear: string) => {
   const [year, month] = monthYear.split("-");
+  if (!year || !month) return false;
   return true;
 };

@@ -42,7 +42,6 @@ export function parseError(error: unknown): AppError {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
 
-    // Extract message from response data - check for 'detail' field first (common Django/FastAPI pattern)
     let errorMessage = "";
     const responseData = error.response?.data;
 
@@ -55,7 +54,6 @@ export function parseError(error: unknown): AppError {
       errorMessage = error.message || "An unexpected error occurred";
     }
 
-    // Handle different types of API errors based on status code
     if (status) {
       // Auth errors
       if (status === 401 || status === 403) {

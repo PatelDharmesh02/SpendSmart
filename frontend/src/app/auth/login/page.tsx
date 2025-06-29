@@ -1,9 +1,9 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import styled, { useTheme } from "styled-components";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { checkAuth, handleLogin } from "@/redux/thunk";
+import { handleLogin } from "@/redux/thunk";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Card } from "@/components/Card";
@@ -11,10 +11,7 @@ import Loader from "@/components/Loader";
 import Link from "next/link";
 import FinancialAnalyticsAnimation from "@/components/BackgroundAnimation";
 import { PresentionChart, Eye, EyeSlash } from "iconsax-react";
-import {
-  userAuthenticatedSelector,
-  userLoadingSelector,
-} from "@/redux/slices/userSlice";
+import { userLoadingSelector } from "@/redux/slices/userSlice";
 import { useToast } from "@/lib/ToasteContext";
 import { AppError, handleErrorWithoutHook } from "@/utils/errorHandler";
 
@@ -249,19 +246,8 @@ export default function LoginPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const theme = useTheme();
-  const isAuthenticated = useAppSelector(userAuthenticatedSelector);
   const isLoading = useAppSelector(userLoadingSelector);
   const { showToast } = useToast();
-
-  useEffect(() => {
-    dispatch(checkAuth());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/dashboard");
-    }
-  }, [isAuthenticated, router]);
 
   const routeHandler = () => {
     router.push("/dashboard");

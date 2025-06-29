@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 import Toast, { ToastMessage, ToastType } from "@/components/Toast";
 import styled from "styled-components";
 
@@ -8,7 +8,6 @@ interface ToastOptions {
 }
 
 interface ToastContextType {
-  // Basic toast methods
   showToast: (
     message: string,
     type: ToastType,
@@ -17,13 +16,11 @@ interface ToastContextType {
   hideToast: (id: string) => void;
   clearAllToasts: () => void;
 
-  // Convenience methods for different toast types
   showSuccess: (message: string, options?: ToastOptions) => string;
   showError: (message: string, options?: ToastOptions) => string;
   showWarning: (message: string, options?: ToastOptions) => string;
   showInfo: (message: string, options?: ToastOptions) => string;
 
-  // Current toasts
   toasts: ToastMessage[];
 }
 
@@ -46,29 +43,23 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  // Remove a toast by its ID
   const hideToast = (id: string) => {
     setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
   };
-
-  // Clear all toasts
   const clearAllToasts = () => {
     setToasts([]);
   };
 
-  // Generate a unique ID for toasts
   const generateId = (): string => {
     return Date.now().toString() + Math.random().toString(36).substring(2, 9);
   };
-
-  // Show a toast with the given parameters
   const showToast = (
     message: string,
     type: ToastType,
     options?: ToastOptions
   ): string => {
     const id = options?.id || generateId();
-    const duration = options?.duration || 5000; // Default 5 seconds
+    const duration = options?.duration || 3000;
 
     const newToast: ToastMessage = {
       id,
@@ -81,7 +72,6 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
     return id;
   };
 
-  // Convenience methods for different toast types
   const showSuccess = (message: string, options?: ToastOptions): string => {
     return showToast(message, "success", options);
   };
@@ -112,7 +102,6 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
       }}
     >
       {children}
-      {/* Render toasts */}
       <ToastWrapper>
         {toasts.map((toast) => (
           <Toast key={toast.id} message={toast} onClose={hideToast} />

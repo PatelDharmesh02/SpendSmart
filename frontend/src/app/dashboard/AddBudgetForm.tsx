@@ -71,6 +71,7 @@ export default function AddBudgetForm({ onSuccess }: AddBudgetFormProps) {
         }
         try {
             const budgetData = await AxiosInstance.post("/budgets/", formData);
+            console.log(budgetData);
             
         } catch (error: unknown) {
             if (error instanceof Error) {
