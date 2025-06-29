@@ -1,14 +1,15 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 
 const CardContainer = styled.div`
   background: ${({ theme }) => theme.cardBg};
   border-radius: ${({ theme }) => theme.radius.lg};
   box-shadow: ${({ theme }) => theme.shadow.sm};
   padding: 1.5rem;
-  height: 100%;
   transition: all 0.3s ease;
   border: 1px solid ${({ theme }) => theme.border};
-
+  width: 100%;
+  min-width: 0;
+  height: 100%;
   &:hover {
     box-shadow: ${({ theme }) => theme.shadow.md};
     transform: translateY(-5px);
@@ -30,18 +31,22 @@ const CardTitle = styled.h3`
 `;
 
 interface DashboardCardProps {
-    title: string;
-    children: React.ReactNode;
-    className?: string;
+  title: string;
+  children: React.ReactNode;
+  className?: string;
 }
 
-export default function DashboardCard({ title, children, className }: DashboardCardProps) {
-    return (
-        <CardContainer className={className}>
-            <CardHeader>
-                <CardTitle>{title}</CardTitle>
-            </CardHeader>
-            {children}
-        </CardContainer>
-    );
+export default function DashboardCard({
+  title,
+  children,
+  className,
+}: DashboardCardProps) {
+  return (
+    <CardContainer className={className}>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      {children}
+    </CardContainer>
+  );
 }

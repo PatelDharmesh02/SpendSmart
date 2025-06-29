@@ -1,12 +1,15 @@
-'use client';
-import { useEffect } from 'react';
-import styled from 'styled-components';
-import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { checkAuth } from '@/redux/thunk';
-import { userAuthenticatedSelector, userLoadingSelector } from '@/redux/slices/userSlice';
-import Loader from '@/components/Loader';
-import FinancialAnalyticsAnimation from '@/components/BackgroundAnimation';
+"use client";
+import { useEffect } from "react";
+import styled from "styled-components";
+import { useRouter } from "next/navigation";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { checkAuth } from "@/redux/thunk";
+import {
+  setUserError,
+  userAuthenticatedSelector,
+} from "@/redux/slices/userSlice";
+import Loader from "@/components/Loader";
+import FinancialAnalyticsAnimation from "@/components/BackgroundAnimation";
 
 const Container = styled.div`
   display: flex;
@@ -31,19 +34,21 @@ export default function Home() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const isAuthenticated = useAppSelector(userAuthenticatedSelector);
-  const loading = useAppSelector(userLoadingSelector);
 
   useEffect(() => {
-    dispatch(checkAuth());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard')
-    } else if (!loading && !isAuthenticated) {
-      router.push('/auth/login')
-    }
-  }, [loading, isAuthenticated, router]);
+    const checkAuthStatus = async () => {
+      try {
+        await dispatch(checkAuth()).unwrap();
+        if (isAuthenticated) {
+          router.push("/dashboard");
+        }
+      } catch (error: unknown) {
+        dispatch(setUserError(`Failed to fetch user data: ${error}`));
+        router.push("/auth/login");
+      }
+    };
+    checkAuthStatus();
+  }, [dispatch, router, isAuthenticated]);
 
   return (
     <Container>

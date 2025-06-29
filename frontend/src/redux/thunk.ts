@@ -7,6 +7,14 @@ import {
   UserResponse,
 } from "@/types/user.types";
 import { AppError, parseError } from "@/utils/errorHandler";
+import { Budget, BudgetCreate } from "@/types/budget.type";
+import {
+  addBudget,
+  removeBudget,
+  setBudgetError,
+  setBudgetLoading,
+  updateBudget,
+} from "./slices/budgetSlice";
 
 export const checkAuth = createAsyncThunk(
   "user/checkAuth",
@@ -81,6 +89,60 @@ export const handleRegister = createAsyncThunk(
       throw appError as AppError;
     } finally {
       dispatch(setUserLoading(false));
+    }
+  }
+);
+
+export const handleAddBudget = createAsyncThunk(
+  "budget/addBudget",
+  async (budget: BudgetCreate, { dispatch }) => {
+    dispatch(setBudgetLoading(true));
+    try {
+      const res = await AxiosInstance.post("/budgets", budget);
+      dispatch(addBudget(res.data));
+      return res.data;
+    } catch (error: unknown) {
+      const appError = parseError(error);
+      dispatch(setBudgetError(`Failed to add budget: ${appError.message}`));
+      throw appError as AppError;
+    } finally {
+      dispatch(setBudgetLoading(false));
+    }
+  }
+);
+
+export const handleUpdateBudget = createAsyncThunk(
+  "budget/updateBudget",
+  async (budget: Budget, { dispatch }) => {
+    dispatch(setBudgetLoading(true));
+    try {
+      const res = await AxiosInstance.put(`/budgets/${budget.id}`, budget);
+      dispatch(updateBudget(res.data));
+      return res.data;
+    } catch (error: unknown) {
+      const appError = parseError(error);
+      dispatch(setBudgetError(`Failed to update budget: ${appError.message}`));
+      throw appError as AppError;
+    } finally {
+      dispatch(setBudgetLoading(false));
+    }
+  }
+);
+
+export const handleDeleteBudget = createAsyncThunk(
+  "budget/deleteBudget",
+  async (budgetId: string, { dispatch }) => {
+    dispatch(setBudgetLoading(true));
+    try {
+      await AxiosInstance.delete(`/budgets/${budgetId}`);
+      dispatch(removeBudget(budgetId));
+      return budgetId;
+    } catch (error: unknown) {
+      const appError = parseError(error);
+      dispatch(setBudgetError(`Failed to delete budget: ${appError.message}`));
+      throw appError as AppError;
+    } finally {
+      dispatch(setBudgetLoading(false));
     }
   }
 );
