@@ -5,7 +5,7 @@ import {
   LoginUserPayload,
   RegisterUserPayload,
   UserResponse,
-} from "@/types/user.types";
+} from "@/types/user.type";
 import { AppError, parseError } from "@/utils/errorHandler";
 import { Budget, BudgetCreate } from "@/types/budget.type";
 import {
@@ -15,6 +15,14 @@ import {
   setBudgetLoading,
   updateBudget,
 } from "./slices/budgetSlice";
+import { TransactionCreate, TransactionUpdate } from "@/types/transaction.type";
+import {
+  addTransaction,
+  removeTransaction,
+  setTransactionError,
+  setTransactionLoading,
+  updateTransaction,
+} from "./slices/transactionSlice";
 
 export const checkAuth = createAsyncThunk(
   "user/checkAuth",
@@ -143,6 +151,69 @@ export const handleDeleteBudget = createAsyncThunk(
       throw appError as AppError;
     } finally {
       dispatch(setBudgetLoading(false));
+    }
+  }
+);
+
+export const handleAddTransaction = createAsyncThunk(
+  "transaction/addTransaction",
+  async (transaction: TransactionCreate, { dispatch }) => {
+    dispatch(setTransactionLoading(true));
+    try {
+      const res = await AxiosInstance.post("/transactions", transaction);
+      dispatch(addTransaction(res.data));
+      return res.data;
+    } catch (error: unknown) {
+      const appError = parseError(error);
+      dispatch(
+        setTransactionError(`Failed to add transaction: ${appError.message}`)
+      );
+      throw appError as AppError;
+    } finally {
+      dispatch(setTransactionLoading(false));
+    }
+  }
+);
+
+export const handleUpdateTransaction = createAsyncThunk(
+  "transaction/updateTransaction",
+  async (transaction: TransactionUpdate, { dispatch }) => {
+    dispatch(setTransactionLoading(true));
+    try {
+      const res = await AxiosInstance.put(
+        `/transactions/${transaction.id}`,
+        transaction
+      );
+      dispatch(updateTransaction(res.data));
+      return res.data;
+    } catch (error: unknown) {
+      const appError = parseError(error);
+      dispatch(
+        setTransactionError(`Failed to update transaction: ${appError.message}`)
+      );
+      throw appError as AppError;
+    } finally {
+      dispatch(setTransactionLoading(false));
+    }
+  }
+);
+
+export const handleDeleteTransaction = createAsyncThunk(
+  "transaction/deleteTransaction",
+  async (transactionId: string, { dispatch }) => {
+    dispatch(setTransactionLoading(true));
+    try {
+      await AxiosInstance.delete(`/transactions/${transactionId}`);
+      dispatch(removeTransaction(transactionId));
+      return transactionId;
+    } catch (error: unknown) {
+      const appError = parseError(error);
+      dispatch(
+        setTransactionError(`Failed to delete transaction: ${appError.message}`)
+      );
+      throw appError as AppError;
+    } finally {
+      dispatch(setTransactionLoading(false));
     }
   }
 );

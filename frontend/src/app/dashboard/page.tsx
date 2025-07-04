@@ -165,7 +165,7 @@ export default function DashboardPage() {
 
       <Modal
         isOpen={showBudgetModal}
-        onClose={handleAddTransaction}
+        onClose={() => setShowBudgetModal(false)}
         title="Create New Budget"
       >
         <AddBudgetForm onSuccess={handleAddBudget} />
