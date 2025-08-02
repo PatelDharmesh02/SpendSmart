@@ -46,10 +46,10 @@ def get_monthly_summary(
     
     try:
         # Use AI to generate summary
-        summary = generate_summary_with_ai(month, tx_summary, budget_data)
+        summary = generate_summary_with_ai(month, tx_summary, budget_data, current_user.name)
     except Exception as ai_error:
         # Fallback to rule-based summary if AI fails
         print(f"AI summary generation failed: {str(ai_error)}. Using fallback.")
-        summary = generate_summary(month, tx_summary, budget_data)
+        summary = generate_summary(month, tx_summary, budget_data, current_user.name)
     
     return { "summary": summary }

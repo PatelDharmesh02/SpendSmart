@@ -1,46 +1,78 @@
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, useTheme } from 'styled-components';
 
-const fade = keyframes`
-  0%, 39%, 100% { opacity: 0.3; }
-  40% { opacity: 1; }
+const rotate = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 `;
 
 const LoaderContainer = styled.div<{ size: number }>`
-  display: inline-block;
-  position: relative;
-  width: ${({ size }) => size}px;
-  height: ${({ size }) => size}px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: ${({ size }) => size * 1.5}px;
+  height: ${({ size }) => size * 1.8}px;
 `;
 
-const Bar = styled.div<{ index: number; size: number; color: string }>`
+const SpinnerContainer = styled.div<{ size: number }>`
+  width: ${({ size }) => size}px;
+  height: ${({ size }) => size}px;
+  position: relative;
+  animation: ${rotate} 2s linear infinite;
+`;
+
+const LoadingText = styled.div`
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.textPrimary};
+  letter-spacing: 1px;
+`;
+
+const Dot = styled.div<{ 
+  index: number; 
+  size: number; 
+  color: string;
+}>`
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: ${({ size }) => size * 0.08}px;
-  height: ${({ size }) => size * 0.25}px;
-  background: ${({ color }) => color};
-  border-radius: ${({ size }) => size * 0.02}px;
-  transform: rotate(${({ index }) => index * 30}deg)
-    translate(${({ size }) => size / 2 - size * 0.125}px)
-    translate(-50%, -50%);
-  transform-origin: center;
-  animation: ${fade} 1.2s linear infinite;
-  animation-delay: ${({ index }) => index * 0.1}s;
+  width: ${({ size }) => size * 0.15}px;
+  height: ${({ size }) => size * 0.15}px;
+  border-radius: 50%;
+  background-color: ${({ color }) => color};
+  top: ${({ index, size }) => {
+    const angle = index * 30 * Math.PI / 180;
+    return size / 2 - Math.cos(angle) * size * 0.4;
+  }}px;
+  left: ${({ index, size }) => {
+    const angle = index * 30 * Math.PI / 180;
+    return size / 2 + Math.sin(angle) * size * 0.4;
+  }}px;
+  transform: translate(-50%, -50%);
 `;
 
 interface LoaderProps {
   size?: 'sm' | 'md' | 'lg';
+  showText?: boolean;
 }
 
-const Loader = ({ size = 'md' }: LoaderProps) => {
-  const sizePx = size === 'sm' ? 20 : size === 'md' ? 40 : 60;
-  const color = '#000'; // use theme.primary if desired
+const Loader = ({ size = 'md', showText = true }: LoaderProps) => {
+  const theme = useTheme();
+  const sizePx = size === 'sm' ? 30 : size === 'md' ? 50 : 80;
+  const primaryColor = theme.primary;
 
   return (
     <LoaderContainer size={sizePx}>
-      {Array.from({ length: 12 }).map((_, i) => (
-        <Bar key={i} index={i} size={sizePx} color={color} />
-      ))}
+      <SpinnerContainer size={sizePx}>
+        {Array.from({ length: 12 }).map((_, i) => (
+          <Dot 
+            key={i} 
+            index={i} 
+            size={sizePx} 
+            color={primaryColor} 
+          />
+        ))}
+      </SpinnerContainer>
+      {showText && <LoadingText>Loading...</LoadingText>}
     </LoaderContainer>
   );
 };

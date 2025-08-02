@@ -10,6 +10,7 @@ import { handleAddBudget } from "@/redux/thunk";
 import { AppError, handleErrorWithoutHook } from "@/utils/errorHandler";
 import { useAppDispatch } from "@/redux/hooks";
 import { useToast } from "@/lib/ToasteContext";
+import DateDropdownPicker from "@/components/DatePicker";
 
 const Form = styled.form`
   display: flex;
@@ -69,16 +70,29 @@ const categories = [
 export default function AddBudgetForm({ onSuccess }: AddBudgetFormProps) {
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
-  const [month, setMonth] = useState("");
+  const [monthDate, setMonthDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const dispatch = useAppDispatch();
   const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
+    debugger;
     e.preventDefault();
     setLoading(true);
-    const formData = { category, amount: Number(amount), month };
+    // Format the date to YYYY-MM format for the API
+    const formattedMonth = `${monthDate.getFullYear()}-${(
+      monthDate.getMonth() + 1
+    )
+      .toString()
+      .padStart(2, "0")}`;
+
+    const formData = {
+      category,
+      amount: Number(amount),
+      month: formattedMonth,
+    };
+
     const isFormValid: boolean = validateBudgetDetails(
       formData as BudgetCreate
     );
@@ -102,6 +116,16 @@ export default function AddBudgetForm({ onSuccess }: AddBudgetFormProps) {
 
   return (
     <Form onSubmit={handleSubmit}>
+      <FormGroup>
+        <Label>
+          Month <Required>*</Required>
+        </Label>
+        <DateDropdownPicker
+          value={monthDate}
+          onApply={(date) => setMonthDate(date)}
+          width="100%"
+        />
+      </FormGroup>
       <FormGroup>
         <Label>
           Category <Required>*</Required>
@@ -130,18 +154,6 @@ export default function AddBudgetForm({ onSuccess }: AddBudgetFormProps) {
           onChange={(e) => setAmount(e.target.value)}
           required
           placeholder="0.00"
-        />
-      </FormGroup>
-
-      <FormGroup>
-        <Label>
-          Month <Required>*</Required>
-        </Label>
-        <Input
-          type="month"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          required
         />
       </FormGroup>
 

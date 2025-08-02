@@ -4,7 +4,7 @@ import os
 from app.services.build_prompt import build_prompt
 from app.utils.constants import CATEGORIES, CATEGORY_RULES
 
-def generate_summary(month: str, tx_summary: dict, budget_data: list) -> str:
+def generate_summary(month: str, tx_summary: dict, budget_data: list, username: str) -> str:
     """Generate financial summary using rule-based analysis"""
     month_name = datetime.strptime(month, "%Y-%m").strftime("%B")
     total_spent = tx_summary['total']
@@ -31,7 +31,7 @@ def generate_summary(month: str, tx_summary: dict, budget_data: list) -> str:
     
     # 3. Build summary sections
     # -- Opening summary
-    summary = f"In {month_name}, you spent ₹{total_spent:,.2f} total. "
+    summary = f"Hello {username}!, In {month_name}, you spent ₹{total_spent:,.2f} total. "
     
     # -- Top spending category
     if top_category:
@@ -68,9 +68,9 @@ def generate_summary(month: str, tx_summary: dict, budget_data: list) -> str:
     return summary
 
 
-def generate_summary_with_ai(month: str, tx_summary: dict, budget_data: list) -> str:
+def generate_summary_with_ai(month: str, tx_summary: dict, budget_data: list, username: str) -> str:
     
-    prompt = build_prompt(month, tx_summary, budget_data);
+    prompt = build_prompt(month, tx_summary, budget_data, username);
     
     endpoint = "https://models.github.ai/inference"
     model = "openai/gpt-4o"

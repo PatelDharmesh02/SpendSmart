@@ -19,4 +19,9 @@ export const Input = styled.input`
   &::placeholder {
     color: ${({ theme }) => theme.textTertiary};
   }
+
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 `;

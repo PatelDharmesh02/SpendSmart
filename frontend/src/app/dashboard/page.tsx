@@ -2,14 +2,18 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useAppDispatch } from "@/redux/hooks";
-import { logoutUser, setUserError, setCurrentDate } from "@/redux/slices/userSlice";
+import {
+  logoutUser,
+  setUserError,
+  setCurrentDate,
+} from "@/redux/slices/userSlice";
 import Header from "@/components/Header";
 import DashboardCard from "./DashboardCard";
 import BudgetSummary from "./BudgetSummary";
 import MonthlySummary from "./MontlySummary";
 import SpendingChart from "./SpendingChart";
-import RecentTransactions from "./RecetTransactions";
-import BudgetsOverview from "./BudgetOverview";
+import Transactions from "./Transactions";
+import BudgetsOverview from "./Budgets";
 import Modal from "@/components/Modal";
 import AddTransactionForm from "./AddTransactionForm";
 import AddBudgetForm from "./AddBudgetForm";
@@ -59,21 +63,9 @@ const DateContainer = styled.div`
   width: 100%;
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 1rem
-`
+  margin-bottom: 1rem;
+`;
 
-const recentTransactions = [
-  { date: "04/10/2024", category: "Groceries", amount: 3000 },
-  { date: "04/05/2024", category: "Entertainment", amount: 1500 },
-  { date: "04/05/2024", category: "Utilities", amount: 3000 },
-  { date: "04/04/2024", category: "Other", amount: 1000 },
-];
-
-const budgets = [
-  { category: "Groceries", budgeted: 18000, spent: 15000 },
-  { category: "Entertainment", budgeted: 5000, spent: 4500 },
-  { category: "Utilities", budgeted: 8500, spent: 8000 },
-];
 
 export default function DashboardPage() {
   const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -81,19 +73,6 @@ export default function DashboardPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { showToast } = useToast();
-
-  const spendingByCategory = {
-    "month": "2025-06",
-    "total_spent": 16700.0,
-    "category_breakdown": {
-      "entertainment": 2000.0,
-      "travel": 4000.0,
-      "food": 5300.0,
-      "health": 1500.0,
-      "groceries": 2500.0,
-      "subcriptions": 1400.0
-    }
-  };
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -128,7 +107,7 @@ export default function DashboardPage() {
 
   const handleMonthchange = (value: DateFormat) => {
     dispatch(setCurrentDate(value));
-  }
+  };
 
   return (
     <DashboardContainer>
@@ -148,21 +127,21 @@ export default function DashboardPage() {
             </DashboardCard>
 
             <DashboardCard title="Spending by Category">
-              <SpendingChart data={spendingByCategory} />
+              <SpendingChart />
             </DashboardCard>
 
             <FullWidthCard>
-              <DashboardCard title="Monthly GRT Summary">
-                <MonthlySummary content="An High Intesar partunit äta enjoron essentar aus." />
+              <DashboardCard title="Monthly AI Summary">
+                <MonthlySummary />
               </DashboardCard>
             </FullWidthCard>
 
-            <DashboardCard title="Budgets">
-              <BudgetsOverview budgets={budgets} />
+            <DashboardCard title="Budgets" height="30rem">
+              <BudgetsOverview />
             </DashboardCard>
 
-            <DashboardCard title="Recent Transactions">
-              <RecentTransactions transactions={recentTransactions} />
+            <DashboardCard title="Transactions" height="30rem">
+              <Transactions />
             </DashboardCard>
           </CardsGrid>
         </PageContent>

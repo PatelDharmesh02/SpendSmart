@@ -10,6 +10,7 @@ import { useAppDispatch } from "@/redux/hooks";
 import { useToast } from "@/lib/ToasteContext";
 import { TransactionCreate } from "@/types/transaction.type";
 import { validateTransactionDetails } from "@/utils/validate";
+import DateDropdownPicker from "@/components/DatePicker";
 
 const Form = styled.form`
   display: flex;
@@ -47,7 +48,7 @@ export default function AddTransactionForm({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("auto");
-  const [date, setDate] = useState("");
+  const [transactionDate, setTransactionDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -65,12 +66,17 @@ export default function AddTransactionForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // Format date to YYYY-MM-DD for API
+    const formattedDate = transactionDate.toISOString().split("T")[0];
+
     const formData = {
       amount: Number(amount),
-      date,
+      date: formattedDate,
       category,
       desc: description,
     };
+
     const isFormValid: boolean = validateTransactionDetails(
       formData as TransactionCreate
     );
@@ -97,6 +103,15 @@ export default function AddTransactionForm({
   return (
     <Form onSubmit={handleSubmit}>
       {error && <p style={{ color: "red" }}>{error}</p>}
+
+      <FormGroup>
+        <Label>Date</Label>
+        <DateDropdownPicker
+          value={transactionDate}
+          onApply={(date) => setTransactionDate(date)}
+          width="100%"
+        />
+      </FormGroup>
 
       <FormGroup>
         <Label>Amount</Label>
@@ -130,16 +145,6 @@ export default function AddTransactionForm({
             </option>
           ))}
         </Select>
-      </FormGroup>
-
-      <FormGroup>
-        <Label>Date</Label>
-        <Input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-        />
       </FormGroup>
 
       <ButtonContainer>

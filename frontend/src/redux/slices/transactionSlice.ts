@@ -49,8 +49,8 @@ export const {
 } = transactionSlice.actions;
 export default transactionSlice.reducer;
 
-export const selectTransactions = (state: RootState) => state.transactions;
-export const selectTransactionLoading = (state: RootState) =>
+export const transactionsSelector = (state: RootState) => state.transactions;
+export const transactionLoadingSelector = (state: RootState) =>
   state.transactions.transactionLoading;
-export const selectTransactionError = (state: RootState) =>
+export const transactionErrorSelector = (state: RootState) =>
   state.transactions.transactionError;

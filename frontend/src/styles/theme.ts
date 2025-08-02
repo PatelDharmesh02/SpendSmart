@@ -12,6 +12,7 @@ export interface ThemeColors {
   surface: string;
   surfaceElevated: string;
   cardBg: string;
+  surfaceLight: string;
   
   // Text
   textPrimary: string;
@@ -136,6 +137,7 @@ export const theme: Record<'light' | 'dark', AppTheme> = {
     surface: '#ffffff',
     surfaceElevated: '#f1f5f9',
     cardBg: '#ffffff',
+    surfaceLight: '#f1f5f9',
     
     // Text
     textPrimary: '#1e293b',
@@ -181,6 +183,7 @@ export const theme: Record<'light' | 'dark', AppTheme> = {
     surface: '#1e293b',
     surfaceElevated: '#334155',
     cardBg: '#1e293b',
+    surfaceLight: '#293548',
     
     // Text
     textPrimary: '#f1f5f9',

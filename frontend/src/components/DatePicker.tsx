@@ -133,7 +133,7 @@ const DateDropdownPicker: React.FC<Props> = ({
 
     return (
         <Wrapper ref={wrapperRef}>
-            <Button onClick={openDropdown} $width={width}>
+            <Button type="button" onClick={openDropdown} $width={width}>
                 {tempDay} {months[tempMonth]} {tempYear}
                 <Calendar size={24} color={theme.textPrimary} />
             </Button>
@@ -168,8 +168,8 @@ const DateDropdownPicker: React.FC<Props> = ({
                     </Select>
 
                     <ButtonGroup>
-                        <ActionButton $cancel onClick={handleCancel}>Cancel</ActionButton>
-                        <ActionButton onClick={handleApply}>Apply</ActionButton>
+                        <ActionButton type="button" $cancel onClick={handleCancel}>Cancel</ActionButton>
+                        <ActionButton type="button" onClick={handleApply}>Apply</ActionButton>
                     </ButtonGroup>
                 </Dropdown>
             )}
