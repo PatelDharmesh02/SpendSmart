@@ -17,6 +17,11 @@ export type UserResponse = {
   name: string;
 };
 
+export type DateFormat = {
+  year: number,
+  month: number
+}
+
 export type UserState = {
   id: string | null;
   email: string | null;
@@ -24,4 +29,5 @@ export type UserState = {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  currentDate: DateFormat
 };

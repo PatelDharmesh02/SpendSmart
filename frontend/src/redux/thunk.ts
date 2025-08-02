@@ -15,13 +15,12 @@ import {
   setBudgetLoading,
   updateBudget,
 } from "./slices/budgetSlice";
-import { TransactionCreate, TransactionUpdate } from "@/types/transaction.type";
+import { TransactionCreate } from "@/types/transaction.type";
 import {
   addTransaction,
   removeTransaction,
   setTransactionError,
   setTransactionLoading,
-  updateTransaction,
 } from "./slices/transactionSlice";
 
 export const checkAuth = createAsyncThunk(
@@ -106,7 +105,7 @@ export const handleAddBudget = createAsyncThunk(
   async (budget: BudgetCreate, { dispatch }) => {
     dispatch(setBudgetLoading(true));
     try {
-      const res = await AxiosInstance.post("/budgets", budget);
+      const res = await AxiosInstance.post("/budgets/", budget);
       dispatch(addBudget(res.data));
       return res.data;
     } catch (error: unknown) {
@@ -160,36 +159,13 @@ export const handleAddTransaction = createAsyncThunk(
   async (transaction: TransactionCreate, { dispatch }) => {
     dispatch(setTransactionLoading(true));
     try {
-      const res = await AxiosInstance.post("/transactions", transaction);
+      const res = await AxiosInstance.post("/transactions/", transaction);
       dispatch(addTransaction(res.data));
       return res.data;
     } catch (error: unknown) {
       const appError = parseError(error);
       dispatch(
         setTransactionError(`Failed to add transaction: ${appError.message}`)
-      );
-      throw appError as AppError;
-    } finally {
-      dispatch(setTransactionLoading(false));
-    }
-  }
-);
-
-export const handleUpdateTransaction = createAsyncThunk(
-  "transaction/updateTransaction",
-  async (transaction: TransactionUpdate, { dispatch }) => {
-    dispatch(setTransactionLoading(true));
-    try {
-      const res = await AxiosInstance.put(
-        `/transactions/${transaction.id}`,
-        transaction
-      );
-      dispatch(updateTransaction(res.data));
-      return res.data;
-    } catch (error: unknown) {
-      const appError = parseError(error);
-      dispatch(
-        setTransactionError(`Failed to update transaction: ${appError.message}`)
       );
       throw appError as AppError;
     } finally {

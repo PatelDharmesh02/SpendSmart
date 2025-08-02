@@ -1,6 +1,6 @@
 import styled from "styled-components";
 
-const CardContainer = styled.div`
+const CardContainer = styled.div<{ height?: string }>`
   background: ${({ theme }) => theme.cardBg};
   border-radius: ${({ theme }) => theme.radius.lg};
   box-shadow: ${({ theme }) => theme.shadow.sm};
@@ -9,11 +9,12 @@ const CardContainer = styled.div`
   border: 1px solid ${({ theme }) => theme.border};
   width: 100%;
   min-width: 0;
-  height: 100%;
+  height: ${({ height }) => height || "100%"};
   &:hover {
     box-shadow: ${({ theme }) => theme.shadow.md};
     transform: translateY(-5px);
   }
+  position: relative;
 `;
 
 const CardHeader = styled.div`
@@ -34,15 +35,17 @@ interface DashboardCardProps {
   title: string;
   children: React.ReactNode;
   className?: string;
+  height?: string;
 }
 
 export default function DashboardCard({
   title,
   children,
   className,
+  height,
 }: DashboardCardProps) {
   return (
-    <CardContainer className={className}>
+    <CardContainer className={className} style={{ height }}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>

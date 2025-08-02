@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import { UserState, UserResponse } from "@/types/user.type";
+import { UserState, UserResponse, DateFormat } from "@/types/user.type";
 
 const initialState: UserState = {
   id: null,
@@ -9,6 +9,10 @@ const initialState: UserState = {
   isAuthenticated: false,
   isLoading: false,
   error: null,
+  currentDate: {
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
+  },
 };
 
 const userSlice = createSlice({
@@ -33,11 +37,19 @@ const userSlice = createSlice({
       state.name = null;
       state.isAuthenticated = false;
     },
+    setCurrentDate: (state, action: PayloadAction<DateFormat>) => {
+      state.currentDate = action.payload;
+    },
   },
 });
 
-export const { loginUser, logoutUser, setUserLoading, setUserError } =
-  userSlice.actions;
+export const {
+  loginUser,
+  logoutUser,
+  setUserLoading,
+  setUserError,
+  setCurrentDate,
+} = userSlice.actions;
 export default userSlice.reducer;
 
 export const userEmailSelector = (state: RootState) => state.user.email;
@@ -46,3 +58,5 @@ export const userAuthenticatedSelector = (state: RootState) =>
   state.user.isAuthenticated;
 export const userLoadingSelector = (state: RootState) => state.user.isLoading;
 export const userErrorSelector = (state: RootState) => state.user.error;
+export const userCurrentDateSelector = (state: RootState) =>
+  state.user.currentDate;

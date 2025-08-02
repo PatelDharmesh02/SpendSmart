@@ -33,6 +33,13 @@ const AppLogoContainer = styled.div`
 const HeaderActionContainer = styled.div`
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+`;
+
+const HeaderActionButtons = styled.div`
+  display: flex;
+  align-items: center;
   gap: 1rem;
 
   @media (max-width: 768px) {
@@ -45,11 +52,11 @@ const MenuButtonWrapper = styled(Button)`
   background: none;
   border: none;
   cursor: pointer;
+  align-self: flex-end;
 
   @media (max-width: 768px) {
     display: block;
     padding: 0.25rem 0.75rem;
-    justify-content: flex-start;
     align-items: center;
   }
 `;
@@ -65,6 +72,7 @@ const MenuPopup = styled.div<{ open: boolean }>`
   padding: 1rem;
   border-radius: ${({ theme }) => theme.radius.lg};
   z-index: 10;
+  min-width: 200px;
 
   & > * + * {
     margin-top: 0.5rem;
@@ -78,6 +86,14 @@ const MenuPopup = styled.div<{ open: boolean }>`
 const ButtonWrapper = styled(Button)`
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+`;
+
+const MenuItemButton = styled(Button)`
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   gap: 0.5rem;
   padding: 0.25rem 0.75rem;
 `;
@@ -123,52 +139,82 @@ const Header: React.FC<HeaderProps> = ({
       </AppLogoContainer>
 
       <HeaderActionContainer>
-        <ButtonWrapper $variant="primary" onClick={onAddTransaction}>
-          <AddCircle size="24" color={theme.surface} variant="Outline" />
-          Add Transaction
-        </ButtonWrapper>
-        <ButtonWrapper $variant="primary" onClick={onAddBudget}>
-          <AddCircle size="24" color={theme.surface} variant="Outline" />
-          Add Budget
-        </ButtonWrapper>
-        <Avatar>{userName ? userName.charAt(0).toUpperCase() : "U"}</Avatar>
-        {handleLogout && (
-          <ButtonWrapper $variant="primary" onClick={handleLogout}>
-            <LogoutCurve size="24" color={theme.surface} variant="Outline" />
+        <HeaderActionButtons>
+          <ButtonWrapper $variant="primary" onClick={onAddTransaction}>
+            <AddCircle size="24" color={theme.surface} variant="Outline" />
+            Add Transaction
           </ButtonWrapper>
-        )}
+          <ButtonWrapper $variant="primary" onClick={onAddBudget}>
+            <AddCircle size="24" color={theme.surface} variant="Outline" />
+            Add Budget
+          </ButtonWrapper>
+          <Avatar>{userName ? userName.charAt(0).toUpperCase() : "U"}</Avatar>
+          {handleLogout && (
+            <ButtonWrapper $variant="primary" onClick={handleLogout}>
+              <LogoutCurve size="24" color={theme.surface} variant="Outline" />
+            </ButtonWrapper>
+          )}
+        </HeaderActionButtons>
+        <MenuButtonWrapper
+          $variant="outline"
+          onClick={() => setMenuOpen((prev) => !prev)}
+        >
+          {menuOpen ? (
+            <CloseCircle
+              size={24}
+              color={theme.textPrimary}
+              variant="Outline"
+            />
+          ) : (
+            <HambergerMenu
+              size={24}
+              color={theme.textPrimary}
+              variant="Outline"
+            />
+          )}
+        </MenuButtonWrapper>
+        <MenuPopup open={menuOpen}>
+          <MenuItemButton
+            $variant="ghost"
+            onClick={() => {
+              setMenuOpen(false);
+              if (onAddTransaction) {
+                onAddTransaction();
+              }
+            }}
+          >
+            <AddCircle size="20" color={theme.primary} variant="Outline" />
+            Add Transaction
+          </MenuItemButton>
+          <MenuItemButton
+            $variant="ghost"
+            onClick={() => {
+              setMenuOpen(false);
+              if (onAddBudget) {
+                onAddBudget();
+              }
+            }}
+          >
+            <AddCircle size="20" color={theme.primary} variant="Outline" />
+            Add Budget
+          </MenuItemButton>
+          {handleLogout && (
+            <MenuItemButton
+              $variant="ghost"
+              onClick={() => {
+                setMenuOpen(false);
+                if (handleLogout) {
+                  handleLogout();
+                }
+              }}
+            >
+              <LogoutCurve size="20" color={theme.danger} variant="Outline" />
+              Logout
+            </MenuItemButton>
+          )}
+        </MenuPopup>
         <ThemeToggle />
       </HeaderActionContainer>
-      <MenuButtonWrapper
-        $variant="outline"
-        onClick={() => setMenuOpen((prev) => !prev)}
-      >
-        {menuOpen ? (
-          <CloseCircle size={24} color={theme.textPrimary} variant="Outline" />
-        ) : (
-          <HambergerMenu
-            size={24}
-            color={theme.textPrimary}
-            variant="Outline"
-          />
-        )}
-      </MenuButtonWrapper>
-      <MenuPopup open={menuOpen}>
-        <ButtonWrapper $variant="primary" onClick={onAddTransaction}>
-          <AddCircle size="24" color={theme.surface} variant="Outline" />
-          Add Transaction
-        </ButtonWrapper>
-        <ButtonWrapper $variant="primary" onClick={onAddBudget}>
-          <AddCircle size="24" color={theme.surface} variant="Outline" />
-          Add Budget
-        </ButtonWrapper>
-        {handleLogout && (
-          <ButtonWrapper $variant="primary" onClick={handleLogout}>
-            <LogoutCurve size="24" color={theme.surface} variant="Outline" />
-          </ButtonWrapper>
-        )}
-        <ThemeToggle />
-      </MenuPopup>
     </HeaderContainer>
   );
 };

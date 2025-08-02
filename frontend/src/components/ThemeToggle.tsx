@@ -29,7 +29,7 @@ export const ThemeToggle = () => {
   const handleToggleTheme = () => {
     toggleTheme();
     showToast(
-      `Switched to ${theme === "light" ? "dark" : "light"} mode!`,
+      `Switched to ${theme === "light" ? "Dark" : "Light"} mode!`,
       "success"
     );
   };

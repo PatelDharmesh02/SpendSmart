@@ -47,6 +47,22 @@ def get_transactions(
     return db.query(Transaction).filter(Transaction.user_id == current_user.id).order_by(Transaction.date.desc()).all()
 
 
+@router.get("/by-month", response_model=List[TransactionOut])
+def get_transactions_by_month(
+    month: str = Query(..., description="Month in YYYY-MM format", example="2025-08"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    start_date = datetime.strptime(month,"%Y-%m").date()
+    end_date = datetime(start_date.year, start_date.month + 1, 1).date() \
+        if(start_date.month != 12) else datetime(start_date.year + 1, 1, 1).date()
+    return db.query(Transaction).filter(
+        Transaction.user_id == current_user.id,
+        Transaction.date >= start_date,
+        Transaction.date < end_date
+    ).all()
+
+
 @router.delete("/{tx_id}", status_code=200, response_model=MessageResponse)
 def delete_transaction(
     tx_id: UUID,

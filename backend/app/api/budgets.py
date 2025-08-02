@@ -21,7 +21,9 @@ def create_budget(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    new_budget = Budget(**budget.model_dump(), user_id=current_user.id , category=budget.category.lower())
+    budget_data = budget.model_dump()
+    budget_data['category'] = budget.category.lower()
+    new_budget = Budget(**budget_data, user_id=current_user.id)
     db.add(new_budget)
     db.commit()
     db.refresh(new_budget)
@@ -34,6 +36,18 @@ def get_budgets(
     current_user: User = Depends(get_current_user)
 ):
     return db.query(Budget).filter(Budget.user_id == current_user.id).all()
+
+
+@router.get("/by-month", response_model=List[BudgetOut])
+def get_budgets_by_month(
+    month: str = Query(..., description="Month in YYYY-MM format", example="2025-06"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+): 
+    return db.query(Budget).filter(
+        Budget.user_id == current_user.id, 
+        Budget.month == month
+    ).all()
 
 
 @router.put("/{budget_id}", response_model=BudgetOut)
@@ -106,16 +120,26 @@ def compare_budgets(
     # Map category -> spend
     spent_by_category = {cat: amount for cat, amount in tx_summary}
     
-    result = []
+    
+    merged_budgets = {}
     for b in budgets:
-        spent = spent_by_category.get(b.category, 0)
+        cat = b.category
+        if cat in merged_budgets:
+            merged_budgets[cat] += b.amount
+        else:
+            merged_budgets[cat] = b.amount
+            
+    
+    result = []
+    for cat, budgeted in merged_budgets.items():
+        spent = spent_by_category.get(cat, 0)
         result.append(
             BudgetCompare(
-                category=b.category,
-                budgeted=b.amount,
+                category=cat,
+                budgeted=budgeted,
                 spent=spent,
-                remaining=b.amount - spent
+                remaining=budgeted - spent
             )
         )
-        
+
     return result
