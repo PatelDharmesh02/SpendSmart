@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import styled, { useTheme } from "styled-components";
+import styled from "styled-components";
 import { useAppDispatch } from "@/redux/hooks";
-import { logoutUser, setUserError } from "@/redux/slices/userSlice";
+import { logoutUser, setUserError, setCurrentDate } from "@/redux/slices/userSlice";
 import Header from "@/components/Header";
 import DashboardCard from "./DashboardCard";
 import BudgetSummary from "./BudgetSummary";
@@ -17,6 +17,8 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/lib/ToasteContext";
 import { checkAuth } from "@/redux/thunk";
 import { AppError, handleErrorWithoutHook } from "@/utils/errorHandler";
+import YearMonthDropdown from "@/components/YearMonthPicker";
+import { DateFormat } from "@/types/user.type";
 
 const DashboardContainer = styled.div`
   height: 100vh;
@@ -53,10 +55,12 @@ const FullWidthCard = styled.div`
   grid-column: 1 / -1;
 `;
 
-const budgetData = {
-  totalBudget: 100000,
-  spent: 42500,
-};
+const DateContainer = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem
+`
 
 const recentTransactions = [
   { date: "04/10/2024", category: "Groceries", amount: 3000 },
@@ -72,19 +76,24 @@ const budgets = [
 ];
 
 export default function DashboardPage() {
-  const theme = useTheme();
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { showToast } = useToast();
 
-  const spendingByCategory = [
-    { name: "Groceries", percentage: 40, color: theme.primary },
-    { name: "Entertainment", percentage: 30, color: theme.secondary },
-    { name: "Utilities", percentage: 16, color: theme.accent },
-    { name: "Other", percentage: 14, color: theme.success },
-  ];
+  const spendingByCategory = {
+    "month": "2025-06",
+    "total_spent": 16700.0,
+    "category_breakdown": {
+      "entertainment": 2000.0,
+      "travel": 4000.0,
+      "food": 5300.0,
+      "health": 1500.0,
+      "groceries": 2500.0,
+      "subcriptions": 1400.0
+    }
+  };
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -110,12 +119,16 @@ export default function DashboardPage() {
   };
 
   const handleAddBudget = () => {
-    setShowBudgetModal(true);
+    setShowBudgetModal(!showBudgetModal);
   };
 
   const handleAddTransaction = () => {
-    setShowTransactionModal(true);
+    setShowTransactionModal(!showTransactionModal);
   };
+
+  const handleMonthchange = (value: DateFormat) => {
+    dispatch(setCurrentDate(value));
+  }
 
   return (
     <DashboardContainer>
@@ -126,12 +139,12 @@ export default function DashboardPage() {
           handleLogout={handleLogout}
         />
         <PageContent>
+          <DateContainer>
+            <YearMonthDropdown onApply={handleMonthchange} />
+          </DateContainer>
           <CardsGrid>
-            <DashboardCard title="Total Budget vs Spent">
-              <BudgetSummary
-                totalBudget={budgetData.totalBudget}
-                spent={budgetData.spent}
-              />
+            <DashboardCard title="Budgeted vs Spent">
+              <BudgetSummary />
             </DashboardCard>
 
             <DashboardCard title="Spending by Category">
@@ -160,7 +173,7 @@ export default function DashboardPage() {
         onClose={() => setShowTransactionModal(false)}
         title="Add New Transaction"
       >
-        <AddTransactionForm onSuccess={() => setShowTransactionModal(false)} />
+        <AddTransactionForm onSuccess={handleAddTransaction} />
       </Modal>
 
       <Modal

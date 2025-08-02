@@ -13,14 +13,6 @@ export type TransactionCreate = {
   date: string;
 };
 
-export type TransactionUpdate = {
-  id: string;
-  amount?: number;
-  desc?: string;
-  category?: string | "auto";
-  date?: string;
-};
-
 export type TransactionDelete = {
   id: string;
 };
@@ -33,3 +25,9 @@ export type AddTransactionResponse = {
   desc: string;
   created_at: string;
 };
+
+export type TransactionMonthlySummary = {
+  month: string;
+  total_spent: number;
+  category_breakdown: Record<string, number>;
+}
