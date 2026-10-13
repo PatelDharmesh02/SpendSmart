@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: spendsmart
+      POSTGRES_PASSWORD: spendsmart
+      POSTGRES_DB: spendsmart
+    ports:
+      - "5432:5432"
+    volumes:
+      - spendsmart_pg:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  api:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://spendsmart:spendsmart@postgres:5432/spendsmart
+      REDIS_URL: redis://redis:6379/0
+      FRONTEND_ORIGIN: http://localhost:3000
+      OAUTH_REDIRECT_BASE: http://localhost:3000
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: ./backend
+    command: celery -A app.worker.celery_app worker --loglevel=info
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://spendsmart:spendsmart@postgres:5432/spendsmart
+      REDIS_URL: redis://redis:6379/0
+      FRONTEND_ORIGIN: http://localhost:3000
+      OAUTH_REDIRECT_BASE: http://localhost:3000
+    depends_on:
+      - postgres
+      - redis
+      - api
+
+volumes:
+  spendsmart_pg:

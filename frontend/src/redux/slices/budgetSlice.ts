@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Budget } from "@/types/budget.type";
-import { RootState } from "../store";
 
 interface BudgetState {
   budgets: Budget[];
@@ -52,8 +51,3 @@ export const {
   setBudgetError,
 } = budgetSlice.actions;
 export default budgetSlice.reducer;
-
-export const budgetsSelector = (state: RootState) => state.budget.budgets;
-export const budgetLoadingSelector = (state: RootState) =>
-  state.budget.isLoading;
-export const budgetErrorSelector = (state: RootState) => state.budget.error;

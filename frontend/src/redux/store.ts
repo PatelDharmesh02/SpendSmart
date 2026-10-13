@@ -1,14 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import userReducer from "./slices/userSlice";
-import transactionReducer from "./slices/transactionSlice";
-import budgetReducer from "./slices/budgetSlice";
+import { spendApi } from "./api";
 
 export const store = configureStore({
   reducer: {
     user: userReducer,
-    transactions: transactionReducer,
-    budget: budgetReducer,
+    [spendApi.reducerPath]: spendApi.reducer,
   },
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(spendApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

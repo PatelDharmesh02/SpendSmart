@@ -58,6 +58,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
     type: ToastType,
     options?: ToastOptions
   ): string => {
+    if (!message) return "";
+
     const id = options?.id || generateId();
     const duration = options?.duration || 3000;
 
@@ -68,7 +70,12 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
       duration,
     };
 
-    setToasts((prevToasts) => [...prevToasts, newToast]);
+    setToasts((prevToasts) => {
+      if (prevToasts.some((toast) => toast.message === message && toast.type === type)) {
+        return prevToasts;
+      }
+      return [...prevToasts, newToast].slice(-3);
+    });
     return id;
   };
 

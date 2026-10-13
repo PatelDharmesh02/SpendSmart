@@ -1,167 +1,172 @@
 "use client";
-import React, { useEffect, useState } from "react";
+
+import { useState } from "react";
 import styled from "styled-components";
-import { useAppDispatch } from "@/redux/hooks";
-import {
-  logoutUser,
-  setUserError,
-  setCurrentDate,
-} from "@/redux/slices/userSlice";
-import Header from "@/components/Header";
+import AppShell from "@/components/AppShell";
 import DashboardCard from "./DashboardCard";
 import BudgetSummary from "./BudgetSummary";
-import MonthlySummary from "./MontlySummary";
 import SpendingChart from "./SpendingChart";
-import Transactions from "./Transactions";
-import BudgetsOverview from "./Budgets";
 import Modal from "@/components/Modal";
 import AddTransactionForm from "./AddTransactionForm";
 import AddBudgetForm from "./AddBudgetForm";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/lib/ToasteContext";
-import { checkAuth } from "@/redux/thunk";
-import { AppError, handleErrorWithoutHook } from "@/utils/errorHandler";
-import YearMonthDropdown from "@/components/YearMonthPicker";
-import { DateFormat } from "@/types/user.type";
+import Loader from "@/components/Loader";
+import { useGetDashboardQuery } from "@/redux/api";
+import { useAppSelector } from "@/redux/hooks";
+import { userAuthenticatedSelector, userCurrentDateSelector } from "@/redux/slices/userSlice";
+import { formatMoney, monthKey } from "@/lib/finance";
 
-const DashboardContainer = styled.div`
-  height: 100vh;
-  background: ${({ theme }) => theme.background};
-`;
-
-const MainContent = styled.div`
-  width: 100%;
-  height: 100%;
-  flex-direction: column;
-`;
-
-const PageContent = styled.div`
-  padding: 2rem;
-  background: ${({ theme }) => theme.background};
-`;
-
-const CardsGrid = styled.div`
+const Grid = styled.div`
   display: grid;
   gap: 1rem;
+  grid-template-columns: repeat(4, 1fr);
 
-  grid-template-columns: 1fr;
-
-  @media (min-width: 768px) {
+  @media (max-width: 1100px) {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  & > * {
-    min-width: 0;
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
   }
 `;
 
-const FullWidthCard = styled.div`
-  grid-column: 1 / -1;
+const Cards = styled.div`
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  grid-template-columns: 1fr 1fr;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
-const DateContainer = styled.div`
+const Stat = styled.div`
+  background: ${({ theme }) => theme.cardBg};
+  border: 1px solid ${({ theme }) => theme.border};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  padding: 1rem 1.25rem;
+`;
+
+const StatLabel = styled.div`
+  color: ${({ theme }) => theme.textSecondary};
+  font-size: 0.85rem;
+`;
+
+const StatValue = styled.div`
+  margin-top: 0.35rem;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.textPrimary};
+`;
+
+const Table = styled.table`
   width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 1rem;
+  border-collapse: collapse;
 `;
 
+const Th = styled.th`
+  text-align: left;
+  padding: 0.6rem;
+  color: ${({ theme }) => theme.textSecondary};
+  font-size: 0.8rem;
+`;
+
+const Td = styled.td`
+  padding: 0.6rem;
+  border-top: 1px solid ${({ theme }) => theme.border};
+  color: ${({ theme }) => theme.textPrimary};
+`;
+
+const Empty = styled.p`
+  color: ${({ theme }) => theme.textSecondary};
+`;
 
 export default function DashboardPage() {
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
-  const dispatch = useAppDispatch();
-  const router = useRouter();
-  const { showToast } = useToast();
-
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        await dispatch(checkAuth()).unwrap();
-      } catch (error: unknown) {
-        dispatch(setUserError(`Failed to fetch user data`));
-        handleErrorWithoutHook(error as AppError, showToast, {
-          prefix: "Token expired or invalid. Please login again",
-          fallbackMessage: "Failed to fetch user data. Please try again.",
-        });
-        router.push("/auth/login");
-      }
-    };
-    checkAuthStatus();
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    showToast("Logout successful!", "success");
-    dispatch(logoutUser());
-    router.push("/auth/login");
-  };
-
-  const handleAddBudget = () => {
-    setShowBudgetModal(!showBudgetModal);
-  };
-
-  const handleAddTransaction = () => {
-    setShowTransactionModal(!showTransactionModal);
-  };
-
-  const handleMonthchange = (value: DateFormat) => {
-    dispatch(setCurrentDate(value));
-  };
+  const currentDate = useAppSelector(userCurrentDateSelector);
+  const authed = useAppSelector(userAuthenticatedSelector);
+  const month = monthKey(currentDate);
+  const { data, isLoading, isError } = useGetDashboardQuery(month, { skip: !authed });
 
   return (
-    <DashboardContainer>
-      <MainContent>
-        <Header
-          onAddTransaction={handleAddTransaction}
-          onAddBudget={handleAddBudget}
-          handleLogout={handleLogout}
-        />
-        <PageContent>
-          <DateContainer>
-            <YearMonthDropdown onApply={handleMonthchange} />
-          </DateContainer>
-          <CardsGrid>
-            <DashboardCard title="Budgeted vs Spent">
-              <BudgetSummary />
+    <AppShell
+      onAddTransaction={() => setShowTransactionModal(true)}
+      onAddBudget={() => setShowBudgetModal(true)}
+    >
+      {isLoading && <Loader size="md" />}
+      {isError && <Empty>Could not load this month.</Empty>}
+      {data && (
+        <>
+          <Grid>
+            <Stat>
+              <StatLabel>Income</StatLabel>
+              <StatValue>{formatMoney(data.income)}</StatValue>
+            </Stat>
+            <Stat>
+              <StatLabel>Expenses</StatLabel>
+              <StatValue>{formatMoney(data.expenses)}</StatValue>
+            </Stat>
+            <Stat>
+              <StatLabel>Net</StatLabel>
+              <StatValue>{formatMoney(data.net)}</StatValue>
+            </Stat>
+            <Stat>
+              <StatLabel>Savings rate</StatLabel>
+              <StatValue>{data.savings_rate}%</StatValue>
+            </Stat>
+          </Grid>
+          <Cards>
+            <DashboardCard title="Budget vs actual">
+              <BudgetSummary rows={data.budget_vs_actual} />
             </DashboardCard>
-
-            <DashboardCard title="Spending by Category">
-              <SpendingChart />
+            <DashboardCard title="Spending by category">
+              <SpendingChart breakdown={data.category_breakdown} total={data.expenses} />
             </DashboardCard>
-
-            <FullWidthCard>
-              <DashboardCard title="Monthly AI Summary">
-                <MonthlySummary />
-              </DashboardCard>
-            </FullWidthCard>
-
-            <DashboardCard title="Budgets" height="30rem">
-              <BudgetsOverview />
+          </Cards>
+          <Cards>
+            <DashboardCard title="Recent transactions" height="auto">
+              {data.transactions.length === 0 ? (
+                <Empty>Add a transaction to see it here.</Empty>
+              ) : (
+                <Table>
+                  <thead>
+                    <tr>
+                      <Th>Date</Th>
+                      <Th>Description</Th>
+                      <Th>Category</Th>
+                      <Th>Amount</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.transactions.slice(0, 6).map((tx) => (
+                      <tr key={tx.id}>
+                        <Td>{tx.date}</Td>
+                        <Td>{tx.desc || tx.merchant || "—"}</Td>
+                        <Td>
+                          {tx.category}
+                          {tx.category_source === "ai" ? " · AI" : ""}
+                        </Td>
+                        <Td>{formatMoney(tx.amount)}</Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
             </DashboardCard>
-
-            <DashboardCard title="Transactions" height="30rem">
-              <Transactions />
+            <DashboardCard title="Budget health" height="auto">
+              <StatValue>{data.budget_health}%</StatValue>
+              <Empty>Share of categories still within budget. Updates live when spending changes.</Empty>
             </DashboardCard>
-          </CardsGrid>
-        </PageContent>
-      </MainContent>
-
-      <Modal
-        isOpen={showTransactionModal}
-        onClose={() => setShowTransactionModal(false)}
-        title="Add New Transaction"
-      >
-        <AddTransactionForm onSuccess={handleAddTransaction} />
+          </Cards>
+        </>
+      )}
+      <Modal isOpen={showTransactionModal} onClose={() => setShowTransactionModal(false)} title="Add transaction">
+        <AddTransactionForm onSuccess={() => setShowTransactionModal(false)} />
       </Modal>
-
-      <Modal
-        isOpen={showBudgetModal}
-        onClose={() => setShowBudgetModal(false)}
-        title="Create New Budget"
-      >
-        <AddBudgetForm onSuccess={handleAddBudget} />
+      <Modal isOpen={showBudgetModal} onClose={() => setShowBudgetModal(false)} title="Add budget">
+        <AddBudgetForm onSuccess={() => setShowBudgetModal(false)} />
       </Modal>
-    </DashboardContainer>
+    </AppShell>
   );
 }

@@ -1,16 +1,17 @@
-// AddBudgetForm.tsx
+"use client";
+
 import React, { useState } from "react";
 import styled from "styled-components";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import Select from "@/components/Select";
-import { BudgetCreate } from "@/types/budget.type";
-import { validateBudgetDetails } from "@/utils/validate";
-import { handleAddBudget } from "@/redux/thunk";
-import { AppError, handleErrorWithoutHook } from "@/utils/errorHandler";
-import { useAppDispatch } from "@/redux/hooks";
-import { useToast } from "@/lib/ToasteContext";
 import DateDropdownPicker from "@/components/DatePicker";
+import { useToast } from "@/lib/ToasteContext";
+import { CATEGORIES, errorMessage } from "@/lib/finance";
+import { useAddBudgetMutation } from "@/redux/api";
+import { useAppSelector } from "@/redux/hooks";
+import { userCurrentDateSelector } from "@/redux/slices/userSlice";
+import { monthKey } from "@/lib/finance";
 
 const Form = styled.form`
   display: flex;
@@ -27,145 +28,74 @@ const FormGroup = styled.div`
 const Label = styled.label`
   font-size: 0.875rem;
   color: ${({ theme }) => theme.textSecondary};
-  display: flex;
 `;
 
 const ButtonContainer = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  margin-top: 1rem;
 `;
 
-const Required = styled.p`
-  color: red;
-  font-size: 0.875rem;
-  margin: 0;
-`;
-
-const ErrorContainer = styled.p`
-  margin: 0;
-  color: red;
-  font-size: 0.875rem;
-`;
-
-interface AddBudgetFormProps {
-  onSuccess: () => void;
-}
-
-const categories = [
-  "groceries",
-  "rent",
-  "food",
-  "travel",
-  "salary",
-  "utilities",
-  "entertainment",
-  "subscriptions",
-  "shopping",
-  "health",
-  "miscellaneous",
-];
-
-export default function AddBudgetForm({ onSuccess }: AddBudgetFormProps) {
-  const [category, setCategory] = useState("");
+export default function AddBudgetForm({ onSuccess }: { onSuccess: () => void }) {
+  const currentDate = useAppSelector(userCurrentDateSelector);
+  const [category, setCategory] = useState("groceries");
   const [amount, setAmount] = useState("");
-  const [monthDate, setMonthDate] = useState(new Date());
-  const [loading, setLoading] = useState(false);
+  const [monthDate, setMonthDate] = useState(
+    new Date(currentDate.year, currentDate.month - 1, 1)
+  );
   const [error, setError] = useState("");
-  const dispatch = useAppDispatch();
+  const [addBudget, { isLoading }] = useAddBudgetMutation();
   const { showToast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    debugger;
-    e.preventDefault();
-    setLoading(true);
-    // Format the date to YYYY-MM format for the API
-    const formattedMonth = `${monthDate.getFullYear()}-${(
-      monthDate.getMonth() + 1
-    )
-      .toString()
-      .padStart(2, "0")}`;
-
-    const formData = {
-      category,
-      amount: Number(amount),
-      month: formattedMonth,
-    };
-
-    const isFormValid: boolean = validateBudgetDetails(
-      formData as BudgetCreate
-    );
-    if (!isFormValid) {
-      setError("Please fill all mandatory fields!");
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const value = Number(amount);
+    if (!category || !value) {
+      setError("Category and amount are required.");
       return;
     }
+    const month = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, "0")}`;
     try {
-      await dispatch(handleAddBudget(formData as BudgetCreate)).unwrap();
-      showToast("Budget added successfully!", "success");
-      onSuccess?.();
-    } catch (error: unknown) {
-      handleErrorWithoutHook(error as AppError, showToast, {
-        prefix: "Failed to add budget",
-        fallbackMessage: "Failed to add budget. Please try again.",
-      });
-    } finally {
-      setLoading(false);
+      await addBudget({ category, amount: value, month }).unwrap();
+      showToast("Budget saved", "success");
+      onSuccess();
+    } catch (err) {
+      const message = errorMessage(err, "Could not save the budget");
+      setError(message);
+      showToast(message, "error");
     }
   };
 
   return (
     <Form onSubmit={handleSubmit}>
       <FormGroup>
-        <Label>
-          Month <Required>*</Required>
-        </Label>
-        <DateDropdownPicker
-          value={monthDate}
-          onApply={(date) => setMonthDate(date)}
-          width="100%"
-        />
+        <Label>Month</Label>
+        <DateDropdownPicker value={monthDate} onApply={setMonthDate} width="100%" />
+        <Label>Selected period defaults to {monthKey(currentDate)}</Label>
       </FormGroup>
       <FormGroup>
-        <Label>
-          Category <Required>*</Required>
-        </Label>
-        <Select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          required
-        >
-          <option value="">Select a category</option>
-          {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat.charAt(0).toUpperCase() + cat.substring(1)}
+        <Label>Category</Label>
+        <Select value={category} onChange={(event) => setCategory(event.target.value)} required>
+          {CATEGORIES.map((item) => (
+            <option key={item} value={item}>
+              {item}
             </option>
           ))}
         </Select>
       </FormGroup>
-
       <FormGroup>
-        <Label>
-          Amount <Required>*</Required>
-        </Label>
-        <Input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          required
-          placeholder="0.00"
-        />
+        <Label>Amount</Label>
+        <Input type="number" value={amount} onChange={(event) => setAmount(event.target.value)} required placeholder="0.00" />
       </FormGroup>
-
+      {error && <p style={{ color: "red" }}>{error}</p>}
       <ButtonContainer>
         <Button type="button" $variant="outline" onClick={onSuccess}>
           Cancel
         </Button>
-        <Button type="submit" $variant="primary" disabled={loading}>
-          {loading ? "Creating..." : "Create Budget"}
+        <Button type="submit" $variant="primary" disabled={isLoading}>
+          {isLoading ? "Saving..." : "Save budget"}
         </Button>
       </ButtonContainer>
-      {error && <ErrorContainer>{error}</ErrorContainer>}
     </Form>
   );
 }

@@ -1,26 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+"use client";
+
+import { useRef } from "react";
 import styled, { useTheme } from "styled-components";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { AppError, handleErrorWithoutHook } from "@/utils/errorHandler";
-import { useAppSelector } from "@/redux/hooks";
-import { userCurrentDateSelector } from "@/redux/slices/userSlice";
-import AxiosInstance from "@/utils/api";
-import { useToast } from "@/lib/ToasteContext";
-import Loader from "@/components/Loader";
-import { TransactionMonthlySummary } from "@/types/transaction.type";
-import { transactionsSelector } from "@/redux/slices/transactionSlice";
+import { formatMoney } from "@/lib/finance";
 
 const ChartContainer = styled.div`
-  height: 300px;
-`;
-
-const LoaderContainer = styled.div`
-  height: 100%;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 280px;
 `;
 
 const TotalAmount = styled.div`
@@ -30,130 +17,54 @@ const TotalAmount = styled.div`
   color: ${({ theme }) => theme.primary};
 `;
 
-interface SpendingChartData {
-  month: string | null;
-  total_spent: number | null;
-  category_breakdown: Record<string, number> | undefined;
-}
+const Empty = styled.p`
+  color: ${({ theme }) => theme.textSecondary};
+`;
 
-export default function SpendingChart() {
-  const [chartData, setChartData] = useState<SpendingChartData | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const currentDate = useAppSelector(userCurrentDateSelector);
-  const transactionData = useAppSelector(transactionsSelector);
-  const chartRef = useRef(null);
+export default function SpendingChart({
+  breakdown,
+  total,
+}: {
+  breakdown: Record<string, number>;
+  total: number;
+}) {
   const theme = useTheme();
-  const { showToast } = useToast();
+  const chartRef = useRef(null);
+  const entries = Object.entries(breakdown || {});
+  const palette = theme.chart || ["#4361ee", "#4cc9f0", "#f72585", "#2ec4b6", "#ff9f1c"];
 
-  const fetchChartData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await AxiosInstance.get<TransactionMonthlySummary>(
-        `/transactions/summary?month=${currentDate.year}-${currentDate.month
-          .toString()
-          .padStart(2, "0")}`
-      );
-      if (res.data) {
-        setChartData(res.data);
-      }
-    } catch (error: unknown) {
-      handleErrorWithoutHook(error as AppError, showToast, {
-        prefix: "Budget data comparision",
-        fallbackMessage: "Budget data comparision failed",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentDate, showToast]);
+  if (!entries.length) {
+    return <Empty>No expenses for this month yet.</Empty>;
+  }
 
-  useEffect(() => {
-    fetchChartData();
-  }, [currentDate, transactionData, fetchChartData]);
-
-  // Use a color palette from your theme or fallback
-  const palette = theme.chart || [
-    "#4361ee",
-    "#3a0ca3",
-    "#4cc9f0",
-    "#f72585",
-    "#7209b7",
-    "#2ec4b6",
-    "#ff9f1c",
-    "#e71d36",
-    "#2a9d8f",
-    "#e9c46a",
-  ];
-
-  // Prepare data for Highcharts
-  const categories = Object.entries(chartData?.category_breakdown || {});
-  const visualData = categories.map(([name, value], i) => ({
-    name: name[0].toUpperCase() + name.slice(1),
-    y: Number(((value / (chartData?.total_spent || 1)) * 100).toFixed(2)),
-    amount: value,
-    color: palette[i % palette.length],
-  }));
-
-  const chartOptions = {
-    chart: {
-      type: "pie",
-      backgroundColor: "transparent",
-      height: 300,
-    },
-    title: {
-      text: "",
-    },
-    tooltip: {
-      pointFormat: "<b>₹{point.amount:,.0f}</b> ({point.percentage:.1f}%)",
-    },
+  const options: Highcharts.Options = {
+    chart: { type: "pie", backgroundColor: "transparent", height: 260 },
+    title: { text: undefined },
+    credits: { enabled: false },
+    tooltip: { pointFormat: "<b>{point.y}</b>" },
     plotOptions: {
       pie: {
-        allowPointSelect: true,
-        cursor: "pointer",
-        dataLabels: {
-          enabled: true,
-          format: "<b>{point.name}</b>: {point.percentage:.1f} %",
-          style: {
-            color: theme.textPrimary,
-            textOutline: "none",
-          },
-        },
+        innerSize: "55%",
+        dataLabels: { enabled: true, format: "{point.name}" },
       },
     },
     series: [
       {
-        name: "Spending",
-        data: visualData,
+        type: "pie",
+        name: "Spent",
+        data: entries.map(([name, value], index) => ({
+          name: name[0].toUpperCase() + name.slice(1),
+          y: value,
+          color: palette[index % palette.length],
+        })),
       },
     ],
-    credits: {
-      enabled: false,
-    },
-    accessibility: {
-      enabled: false,
-    },
   };
-
-  if (loading) {
-    return (
-      <LoaderContainer>
-        <Loader size="md" />
-      </LoaderContainer>
-    );
-  }
 
   return (
     <ChartContainer>
-      <TotalAmount>
-        Total Spent:{" "}
-        <span style={{ color: theme.textPrimary }}>
-          ₹{chartData?.total_spent?.toLocaleString()}
-        </span>
-      </TotalAmount>
-      <HighchartsReact
-        highcharts={Highcharts}
-        options={chartOptions}
-        ref={chartRef}
-      />
+      <TotalAmount>{formatMoney(total)} spent</TotalAmount>
+      <HighchartsReact highcharts={Highcharts} options={options} ref={chartRef} />
     </ChartContainer>
   );
 }

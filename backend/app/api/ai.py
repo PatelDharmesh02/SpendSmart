@@ -1,55 +1,56 @@
+import json
+
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
-from app.db.deps import get_db
+
 from app.api.deps import get_current_user
-from app.models.budgets import Budget
-from app.models.transactions import Transaction
+from app.db.deps import get_db
+from app.models.insight import Insight
+from app.models.job import Job
 from app.models.user import User
-from datetime import datetime
-from app.services.summarizer import summarize_budgets, summarize_transactions
-from app.ai.ai_summary import generate_summary, generate_summary_with_ai
+from app.schemas.dashboard import InsightOut, JobOut
+from app.tasks import enqueue_insight
 
 router = APIRouter()
 
-@router.get("/summary")
+
+@router.get("/summary", response_model=InsightOut)
 def get_monthly_summary(
     month: str = Query(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
-    try:
-        start_date = datetime.strptime(month, "%Y-%m").date()
-        end_date = datetime(start_date.year, start_date.month + 1, 1).date() \
-            if start_date.month != 12 else datetime(start_date.year + 1, 1, 1).date()
-    except:
-        raise HTTPException(status_code=400, detail="Invalid month format")
+    row = db.query(Insight).filter(Insight.user_id == current_user.id, Insight.month == month).first()
+    if not row:
+        return InsightOut(month=month, summary=None, cached=False)
+    return InsightOut(month=month, summary=row.summary, generated_at=row.generated_at, cached=True)
 
-    # 1. Fetch transactions
-    transactions = db.query(Transaction).filter(
-        Transaction.user_id == current_user.id,
-        Transaction.date >= start_date,
-        Transaction.date < end_date
-    ).all()
 
-    # 2. Fetch budgets
-    budgets = db.query(Budget).filter(
-        Budget.user_id == current_user.id,
-        Budget.month == month
-    ).all()
+@router.post("/summary", response_model=JobOut, status_code=202)
+def regenerate_summary(
+    month: str = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    job = Job(
+        user_id=current_user.id,
+        type="insight",
+        status="queued",
+        payload=json.dumps({"month": month}),
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+    enqueue_insight(str(current_user.id), month, str(job.id))
+    db.refresh(job)
+    return job
 
-    if not transactions:
-        return { "summary": "No transactions found for this month." }
-    
-    tx_summary = summarize_transactions(transactions)
-    budget_data = summarize_budgets(budgets)
-    
-    try:
-        # Use AI to generate summary
-        summary = generate_summary_with_ai(month, tx_summary, budget_data, current_user.name)
-    except Exception as ai_error:
-        # Fallback to rule-based summary if AI fails
-        print(f"AI summary generation failed: {str(ai_error)}. Using fallback.")
-        summary = generate_summary(month, tx_summary, budget_data, current_user.name)
-    
-    return { "summary": summary }
+
+@router.get("/jobs/{job_id}", response_model=JobOut)
+def get_job(job_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    job = db.query(Job).filter(Job.id == UUID(str(job_id)), Job.user_id == current_user.id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job

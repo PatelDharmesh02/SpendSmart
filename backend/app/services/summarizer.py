@@ -5,8 +5,9 @@ def summarize_transactions(transactions):
     by_category = defaultdict(float)
 
     for tx in transactions:
-        by_category[tx.category] += tx.amount
-        total += tx.amount
+        amount = float(tx.amount)
+        by_category[tx.category] += amount
+        total += amount
 
     sorted_cats = sorted(by_category.items(), key=lambda x: -x[1])
 

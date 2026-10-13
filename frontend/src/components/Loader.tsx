@@ -29,23 +29,23 @@ const LoadingText = styled.div`
   letter-spacing: 1px;
 `;
 
-const Dot = styled.div<{ 
-  index: number; 
-  size: number; 
-  color: string;
+const Dot = styled.div<{
+  $index: number;
+  $size: number;
+  $color: string;
 }>`
   position: absolute;
-  width: ${({ size }) => size * 0.15}px;
-  height: ${({ size }) => size * 0.15}px;
+  width: ${({ $size }) => $size * 0.15}px;
+  height: ${({ $size }) => $size * 0.15}px;
   border-radius: 50%;
-  background-color: ${({ color }) => color};
-  top: ${({ index, size }) => {
-    const angle = index * 30 * Math.PI / 180;
-    return size / 2 - Math.cos(angle) * size * 0.4;
+  background-color: ${({ $color }) => $color};
+  top: ${({ $index, $size }) => {
+    const angle = $index * 30 * Math.PI / 180;
+    return $size / 2 - Math.cos(angle) * $size * 0.4;
   }}px;
-  left: ${({ index, size }) => {
-    const angle = index * 30 * Math.PI / 180;
-    return size / 2 + Math.sin(angle) * size * 0.4;
+  left: ${({ $index, $size }) => {
+    const angle = $index * 30 * Math.PI / 180;
+    return $size / 2 + Math.sin(angle) * $size * 0.4;
   }}px;
   transform: translate(-50%, -50%);
 `;
@@ -64,11 +64,11 @@ const Loader = ({ size = 'md', showText = true }: LoaderProps) => {
     <LoaderContainer size={sizePx}>
       <SpinnerContainer size={sizePx}>
         {Array.from({ length: 12 }).map((_, i) => (
-          <Dot 
-            key={i} 
-            index={i} 
-            size={sizePx} 
-            color={primaryColor} 
+          <Dot
+            key={i}
+            $index={i}
+            $size={sizePx}
+            $color={primaryColor}
           />
         ))}
       </SpinnerContainer>

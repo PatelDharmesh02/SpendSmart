@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { useToast } from "@/lib/ToasteContext";
+import { closeSession } from "@/lib/session";
 
 export type ErrorType = "api" | "validation" | "auth" | "network" | "unknown";
 
@@ -156,6 +157,10 @@ export function useErrorHandler() {
       fallbackMessage,
     } = options || {};
     const appError = parseError(error);
+    if (appError.status === 401) {
+      closeSession();
+      return appError;
+    }
     const displayMessage = prefix
       ? `${prefix}: ${appError.message}`
       : appError.message || fallbackMessage || "An unexpected error occurred";
@@ -186,6 +191,10 @@ export function handleErrorWithoutHook(
     fallbackMessage?: string;
   }
 ) {
+  if (error.status === 401) {
+    closeSession();
+    return error;
+  }
   const { prefix = "", fallbackMessage } = options || {};
   const displayMessage = prefix
     ? `${prefix}: ${error.message}`

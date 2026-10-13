@@ -2,8 +2,8 @@
 import React, { useState } from "react";
 import styled, { useTheme } from "styled-components";
 import { useRouter } from "next/navigation";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { handleLogin } from "@/redux/thunk";
+import { useLoginMutation } from "@/redux/api";
+import { startOAuth, errorMessage } from "@/lib/finance";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Card } from "@/components/Card";
@@ -11,9 +11,7 @@ import Loader from "@/components/Loader";
 import Link from "next/link";
 import FinancialAnalyticsAnimation from "@/components/BackgroundAnimation";
 import { PresentionChart, Eye, EyeSlash } from "iconsax-react";
-import { userLoadingSelector } from "@/redux/slices/userSlice";
 import { useToast } from "@/lib/ToasteContext";
-import { AppError, handleErrorWithoutHook } from "@/utils/errorHandler";
 
 const LoginContainer = styled.div`
   display: flex;
@@ -242,33 +240,22 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const dispatch = useAppDispatch();
+  const [login, { isLoading }] = useLoginMutation();
   const router = useRouter();
   const theme = useTheme();
-  const isLoading = useAppSelector(userLoadingSelector);
   const { showToast } = useToast();
-
-  const routeHandler = () => {
-    router.push("/dashboard");
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
     try {
-      await dispatch(handleLogin({ email, password, routeHandler })).unwrap();
+      await login({ email, password }).unwrap();
       showToast("Login successful!", "success");
+      router.push("/dashboard");
     } catch (err: unknown) {
-      // Use our error handler to process the error
-      handleErrorWithoutHook(err as AppError, showToast, {
-        prefix: "Login failed",
-        fallbackMessage: "Failed to login. Please try again.",
-      });
-      setError("Incorrect email or password!");
-    } finally {
-      setLoading(false);
+      const message = errorMessage(err, "Incorrect email or password");
+      setError(message);
+      showToast(message, "error");
     }
   };
 
@@ -337,10 +324,10 @@ export default function LoginPage() {
             <Button
               type="submit"
               $variant="primary"
-              disabled={loading}
+              disabled={isLoading}
               $fullWidth
             >
-              {loading ? <Loader size="sm" /> : "Sign In"}
+              {isLoading ? <Loader size="sm" /> : "Sign In"}
             </Button>
           </form>
 
@@ -349,12 +336,12 @@ export default function LoginPage() {
           </Divider>
 
           <OAuthContainer>
-            <OAuthButton type="button">
+            <OAuthButton type="button" onClick={() => startOAuth("google")}>
               <GoogleIcon />
               <span>Sign in with Google</span>
             </OAuthButton>
 
-            <OAuthButton type="button">
+            <OAuthButton type="button" onClick={() => startOAuth("github")}>
               <GitHubIcon />
               <span>Sign in with GitHub</span>
             </OAuthButton>
