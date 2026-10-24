@@ -87,7 +87,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
     return { error: { status: 401, data: { detail: "Session ended" } } };
   }
 
-  let result = await rawBaseQuery(args, api, extraOptions);
+  const result = await rawBaseQuery(args, api, extraOptions);
   if (result.error?.status !== 401 || isAuthFree(url)) {
     return result;
   }

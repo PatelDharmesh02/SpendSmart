@@ -233,7 +233,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [registerUser, { isLoading }] = useRegisterMutation();
   const router = useRouter();
   const theme = useTheme();
@@ -398,10 +397,10 @@ export default function RegisterPage() {
             <Button
               type="submit"
               $variant="primary"
-              disabled={isLoading || loading}
+              disabled={isLoading}
               $fullWidth
             >
-              {isLoading || loading ? <Loader size="sm" /> : "Create Account"}
+              {isLoading ? <Loader size="sm" /> : "Create Account"}
             </Button>
           </form>
 
