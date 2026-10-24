@@ -8,7 +8,8 @@ from app.db.session import Base
 from app.models import budgets, goal, insight, job, refresh_token, transactions, user  # noqa: F401
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# ConfigParser treats "%" as interpolation, which breaks a URL-encoded password.
+config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name, disable_existing_loggers=False)

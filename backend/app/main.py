@@ -2,6 +2,7 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
+import truststore
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +13,7 @@ from app.api.ws import router as ws_router
 from app.core.config import settings
 from app.services.realtime import hub, listen_redis
 
+truststore.inject_into_ssl()
 
 def run_migrations() -> None:
     if os.getenv("RUN_MIGRATIONS", "1") != "1":
@@ -22,7 +24,8 @@ def run_migrations() -> None:
     from alembic.config import Config
 
     cfg = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
-    cfg.set_main_option("sqlalchemy.url", settings.database_url)
+    # ConfigParser treats "%" as interpolation, which breaks a URL-encoded password.
+    cfg.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
     command.upgrade(cfg, "head")
 
 
