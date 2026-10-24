@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Transaction } from "@/types/transaction.type";
-import { RootState } from "@/redux/store";
 
 export interface TransactionState {
   transactions: Transaction[];
@@ -48,9 +47,3 @@ export const {
   setTransactionError,
 } = transactionSlice.actions;
 export default transactionSlice.reducer;
-
-export const transactionsSelector = (state: RootState) => state.transactions;
-export const transactionLoadingSelector = (state: RootState) =>
-  state.transactions.transactionLoading;
-export const transactionErrorSelector = (state: RootState) =>
-  state.transactions.transactionError;

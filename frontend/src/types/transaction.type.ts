@@ -1,16 +1,23 @@
 export type Transaction = {
   id: string;
   amount: number;
-  desc: string;
-  category: string | "auto";
+  desc?: string | null;
+  merchant?: string | null;
+  category: string;
   date: string;
+  tx_type?: "income" | "expense" | string;
+  category_source?: "user" | "ai" | string;
+  ai_confidence?: number | null;
+  status?: string;
 };
 
 export type TransactionCreate = {
   amount: number;
-  desc: string;
-  category: string | "auto";
+  desc?: string;
+  merchant?: string;
+  category: string;
   date: string;
+  tx_type?: "income" | "expense";
 };
 
 export type TransactionDelete = {

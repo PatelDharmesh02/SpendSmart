@@ -15,6 +15,8 @@ export type UserResponse = {
   id: string;
   email: string;
   name: string;
+  auth_provider?: string;
+  provider_id?: string | null;
 };
 
 export type DateFormat = {

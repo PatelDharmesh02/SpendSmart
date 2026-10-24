@@ -1,27 +1,35 @@
-from pydantic import BaseModel, EmailStr, constr
 from datetime import datetime
 from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserRegister(BaseModel):
     email: EmailStr
-    password: constr(min_length=6)
+    password: str = Field(min_length=6)
     name: str
+
 
 class UserPublic(BaseModel):
     id: UUID
     email: EmailStr
     name: str
+    auth_provider: str = "password"
+    provider_id: str | None = None
     created_at: datetime
 
-    class Config:   
-        from_attributes = True
-        
+    model_config = ConfigDict(from_attributes=True)
+
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
-class Token(BaseModel):
+
+class AuthResponse(BaseModel):
+    user: UserPublic
     access_token: str
-    token_type: str = "bearer"
+
+
+class WsTicket(BaseModel):
+    ticket: str

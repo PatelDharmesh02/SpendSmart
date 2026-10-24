@@ -1,11 +1,14 @@
-from pydantic import BaseModel
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
+
 
 class BudgetCreate(BaseModel):
     category: str
     amount: float
-    month: str  # "2025-06"
+    month: str
+
 
 class BudgetOut(BaseModel):
     id: UUID
@@ -14,14 +17,11 @@ class BudgetOut(BaseModel):
     month: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class BudgetCompare(BaseModel):
-    category: str  # "2025-06"
+    category: str
     budgeted: float
     spent: float
     remaining: float
-
-    class Config:
-        from_attributes = True

@@ -2,18 +2,16 @@
 import React, { useState } from "react";
 import styled, { useTheme } from "styled-components";
 import { useRouter } from "next/navigation";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { handleRegister } from "@/redux/thunk";
-import { userLoadingSelector } from "@/redux/slices/userSlice";
-import { Button } from "@/components/Button";
+import { useRegisterMutation } from "@/redux/api";
+import { errorMessage, startOAuth } from "@/lib/finance";
+import { PresentionChart, Eye, EyeSlash, TickCircle } from "iconsax-react";
+import { useToast } from "@/lib/ToasteContext";
 import { Input } from "@/components/Input";
 import { Card } from "@/components/Card";
 import Loader from "@/components/Loader";
 import Link from "next/link";
 import FinancialAnalyticsAnimation from "@/components/BackgroundAnimation";
-import { PresentionChart, Eye, EyeSlash, TickCircle } from "iconsax-react";
-import { useToast } from "@/lib/ToasteContext";
-import { AppError, handleErrorWithoutHook } from "@/utils/errorHandler";
+import { Button } from "@/components/Button";
 
 const RegisterContainer = styled.div`
   display: flex;
@@ -235,10 +233,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const dispatch = useAppDispatch();
+  const [registerUser, { isLoading }] = useRegisterMutation();
   const router = useRouter();
-  const isLoading = useAppSelector(userLoadingSelector);
   const theme = useTheme();
   const { showToast } = useToast();
 
@@ -248,34 +244,25 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
-      setLoading(false);
       return;
     }
 
     try {
-      await dispatch(
-        handleRegister({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          routeHandler,
-        })
-      ).unwrap();
+      await registerUser({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      }).unwrap();
       showToast("Registration successful!", "success");
+      routeHandler();
     } catch (err: unknown) {
-      // Use our error handler to process the error
-      handleErrorWithoutHook(err as AppError, showToast, {
-        prefix: "Registration failed",
-        fallbackMessage: "Failed to register. Please try again.",
-      });
-      setError("Registration failed!");
-    } finally {
-      setLoading(false);
+      const message = errorMessage(err, "Registration failed");
+      setError(message);
+      showToast(message, "error");
     }
   };
 
@@ -410,10 +397,10 @@ export default function RegisterPage() {
             <Button
               type="submit"
               $variant="primary"
-              disabled={loading}
+              disabled={isLoading}
               $fullWidth
             >
-              {loading ? <Loader size="sm" /> : "Create Account"}
+              {isLoading ? <Loader size="sm" /> : "Create Account"}
             </Button>
           </form>
 
@@ -422,12 +409,12 @@ export default function RegisterPage() {
           </Divider>
 
           <OAuthContainer>
-            <OAuthButton type="button">
+            <OAuthButton type="button" onClick={() => startOAuth("google")}>
               <GoogleIcon />
               <span>Sign up with Google</span>
             </OAuthButton>
 
-            <OAuthButton type="button" style={{ marginTop: "0.75rem" }}>
+            <OAuthButton type="button" style={{ marginTop: "0.75rem" }} onClick={() => startOAuth("github")}>
               <GitHubIcon />
               <span>Sign up with GitHub</span>
             </OAuthButton>

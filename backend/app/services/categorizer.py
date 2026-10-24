@@ -1,29 +1,41 @@
+from uuid import UUID
+
+from app.ai.predict_category import predict_category, predict_category_with_ai
 from app.db.session import SessionLocal
 from app.models.transactions import Transaction
-from app.ai.predict_category import predict_category, predict_category_with_ai
+from app.services.categories import normalize_category
+from app.services.events import publish_month
 
-def auto_categorize_transaction(tx_id: int):
+
+def categorize_transaction_record(tx_id: str) -> None:
     db = SessionLocal()
     try:
-        tx = db.query(Transaction).filter(Transaction.id == tx_id).first()
-        if not tx:
+        tx = db.query(Transaction).filter(Transaction.id == UUID(str(tx_id))).first()
+        if not tx or tx.status != "pending":
             return
-        
-        # Try AI prediction exactly once
+        description = tx.desc or tx.merchant or ""
         try:
-            predicted = predict_category_with_ai(tx.desc, tx.amount)
+            raw = predict_category_with_ai(description, float(tx.amount))
+            category, confidence = normalize_category(raw)
+            source = "ai"
         except Exception as ai_error:
-            # Immediate fallback to rule-based if AI fails
-            print(f"AI prediction failed (single attempt), using fallback: {str(ai_error)}")
-            predicted = predict_category(tx.desc, tx.amount)
-        
-        # Update transaction
-        tx.category = predicted
+            print(f"AI categorization failed, using rules: {ai_error}")
+            category = predict_category(description, float(tx.amount))
+            category, confidence = normalize_category(category)
+            confidence = min(confidence, 0.55)
+            source = "ai"
+        tx.category = category
+        tx.category_source = source
+        tx.ai_confidence = confidence
+        tx.status = "ready"
+        if category == "salary":
+            tx.tx_type = "income"
         db.commit()
-        
-    except Exception as e:
+        db.refresh(tx)
+        publish_month(db, tx.user_id, tx.date.strftime("%Y-%m"), tx)
+    except Exception as exc:
         db.rollback()
-        print(f"Error categorizing transaction {tx_id}: {str(e)}")
+        print(f"Error categorizing transaction {tx_id}: {exc}")
         raise
     finally:
         db.close()
