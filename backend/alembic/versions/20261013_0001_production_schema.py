@@ -20,7 +20,7 @@ def _columns(table: str):
 def upgrade() -> None:
     if "users" not in _tables():
         from app.db.session import Base
-        from app.models import budgets, goal, insight, job, refresh_token, transactions, user  # noqa: F401
+        from app.models import budgets, goal, insight, job, monthly_income, refresh_token, transactions, user  # noqa: F401
 
         Base.metadata.create_all(bind=op.get_bind())
         return

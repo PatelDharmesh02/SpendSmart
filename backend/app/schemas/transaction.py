@@ -1,4 +1,5 @@
-from datetime import date, datetime
+from datetime import date as Date
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -8,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class TransactionCreate(BaseModel):
     amount: float
     category: str = "auto"
-    date: date
+    date: Date
     desc: Optional[str] = None
     merchant: Optional[str] = None
     tx_type: str = "expense"
@@ -17,7 +18,7 @@ class TransactionCreate(BaseModel):
 class TransactionUpdate(BaseModel):
     amount: Optional[float] = None
     category: Optional[str] = None
-    date: Optional[date] = None
+    date: Optional[Date] = None
     desc: Optional[str] = None
     merchant: Optional[str] = None
     tx_type: Optional[str] = None
@@ -27,7 +28,7 @@ class TransactionOut(BaseModel):
     id: UUID
     amount: float
     category: str
-    date: date
+    date: Date
     desc: Optional[str] = None
     merchant: Optional[str] = None
     tx_type: str = "expense"

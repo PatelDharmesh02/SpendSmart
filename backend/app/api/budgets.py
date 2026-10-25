@@ -15,7 +15,7 @@ from app.services.finance import build_month_snapshot, money
 router = APIRouter()
 
 
-@router.post("/", response_model=BudgetOut, status_code=201)
+@router.post("", response_model=BudgetOut, status_code=201)
 def create_budget(
     budget: BudgetCreate,
     db: Session = Depends(get_db),
@@ -46,7 +46,7 @@ def create_budget(
     return new_budget
 
 
-@router.get("/", response_model=list[BudgetOut])
+@router.get("", response_model=list[BudgetOut])
 def get_budgets(
     month: str | None = None,
     db: Session = Depends(get_db),

@@ -14,12 +14,12 @@ from app.services.finance import money
 router = APIRouter()
 
 
-@router.get("/", response_model=list[GoalRead])
+@router.get("", response_model=list[GoalRead])
 def list_goals(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return db.query(Goal).filter(Goal.user_id == current_user.id).order_by(Goal.created_at.desc()).all()
 
 
-@router.post("/", response_model=GoalRead, status_code=201)
+@router.post("", response_model=GoalRead, status_code=201)
 def create_goal(body: GoalWrite, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     goal = Goal(
         user_id=current_user.id,

@@ -1,6 +1,7 @@
 import hashlib
 import secrets
 from datetime import datetime, timedelta
+from typing import Literal
 from uuid import UUID
 
 from fastapi import Response
@@ -16,13 +17,21 @@ def hash_token(raw: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
-def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+def _cookie_policy() -> tuple[bool, Literal["lax", "none"]]:
+    # Deployed frontend and API are different sites, so the browser only
+    # sends the session cookie on credentialed API calls when SameSite is None.
     secure = settings.cookie_secure
+    samesite: Literal["lax", "none"] = "none" if secure else "lax"
+    return secure, samesite
+
+
+def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+    secure, samesite = _cookie_policy()
     response.set_cookie(
         "access_token",
         access_token,
         httponly=True,
-        samesite="lax",
+        samesite=samesite,
         secure=secure,
         max_age=settings.access_token_minutes * 60,
         path="/",
@@ -31,7 +40,7 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str) 
         "refresh_token",
         refresh_token,
         httponly=True,
-        samesite="lax",
+        samesite=samesite,
         secure=secure,
         max_age=settings.refresh_token_days * 24 * 3600,
         path="/api/v1/auth",
@@ -39,8 +48,9 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str) 
 
 
 def clear_auth_cookies(response: Response) -> None:
-    response.delete_cookie("access_token", path="/")
-    response.delete_cookie("refresh_token", path="/api/v1/auth")
+    secure, samesite = _cookie_policy()
+    response.delete_cookie("access_token", path="/", secure=secure, samesite=samesite)
+    response.delete_cookie("refresh_token", path="/api/v1/auth", secure=secure, samesite=samesite)
 
 
 def issue_session(response: Response, db: Session, user: User) -> str:

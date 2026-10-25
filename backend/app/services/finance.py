@@ -4,6 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.budgets import Budget
+from app.models.monthly_income import MonthlyIncome
 from app.models.transactions import Transaction
 from app.services.periods import month_bounds
 
@@ -68,12 +69,24 @@ def build_month_snapshot(db: Session, user_id, month: str) -> dict:
     else:
         budget_health = 100.0
 
+    stored_income = (
+        db.query(MonthlyIncome)
+        .filter(MonthlyIncome.user_id == user_id, MonthlyIncome.month == month)
+        .first()
+    )
+    monthly_income = None if stored_income is None else round(_f(stored_income.amount), 2)
+    income_description = None if stored_income is None else stored_income.description
+    if monthly_income is not None:
+        income = monthly_income
+
     net = round(income - expenses, 2)
     savings_rate = round((net / income) * 100, 1) if income else 0.0
 
     return {
         "month": month,
         "income": round(income, 2),
+        "monthly_income": monthly_income,
+        "income_description": income_description,
         "expenses": round(expenses, 2),
         "net": net,
         "savings_rate": savings_rate,

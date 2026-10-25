@@ -8,7 +8,7 @@ def _auth(client):
 def test_budget_versus_actual_math(client):
     _auth(client)
     client.post(
-        "/api/v1/transactions/",
+        "/api/v1/transactions",
         json={
             "amount": 80000,
             "category": "salary",
@@ -18,7 +18,7 @@ def test_budget_versus_actual_math(client):
         },
     )
     client.post(
-        "/api/v1/transactions/",
+        "/api/v1/transactions",
         json={
             "amount": 1200,
             "category": "groceries",
@@ -28,7 +28,7 @@ def test_budget_versus_actual_math(client):
         },
     )
     client.post(
-        "/api/v1/budgets/",
+        "/api/v1/budgets",
         json={"category": "groceries", "amount": 2000, "month": "2026-10"},
     )
     dashboard = client.get("/api/v1/dashboard", params={"month": "2026-10"})
@@ -41,6 +41,36 @@ def test_budget_versus_actual_math(client):
         {"category": "groceries", "budgeted": 2000, "spent": 1200, "remaining": 800}
     ]
     assert body["budget_health"] == 100
+
+
+def test_monthly_income_replaces_transaction_sum(client):
+    _auth(client)
+    client.post(
+        "/api/v1/transactions",
+        json={
+            "amount": 80000,
+            "category": "salary",
+            "date": "2026-10-01",
+            "desc": "Payroll",
+            "tx_type": "income",
+        },
+    )
+    saved = client.put(
+        "/api/v1/income",
+        json={"month": "2026-10", "amount": 90000, "description": "October salary"},
+    )
+    assert saved.status_code == 200
+    assert saved.json()["description"] == "October salary"
+    dashboard = client.get("/api/v1/dashboard", params={"month": "2026-10"})
+    body = dashboard.json()
+    assert body["monthly_income"] == 90000
+    assert body["income"] == 90000
+    assert body["income_description"] == "October salary"
+
+    updated = client.put("/api/v1/income", json={"month": "2026-10", "amount": 95000})
+    assert updated.status_code == 200
+    again = client.get("/api/v1/dashboard", params={"month": "2026-10"})
+    assert again.json()["income"] == 95000
 
 
 def test_dashboard_is_one_payload(client):

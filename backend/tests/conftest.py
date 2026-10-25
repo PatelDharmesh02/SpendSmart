@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db.session import Base, engine
 from app.main import app
-from app.models import budgets, goal, insight, job, refresh_token, transactions, user  # noqa: F401
+from app.models import budgets, goal, insight, job, monthly_income, refresh_token, transactions, user  # noqa: F401
 
 
 @pytest.fixture(autouse=True)
