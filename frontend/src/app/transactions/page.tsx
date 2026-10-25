@@ -2,13 +2,11 @@
 
 import { useState } from "react";
 import styled from "styled-components";
-import AppShell from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import Select from "@/components/Select";
 import Modal from "@/components/Modal";
 import Loader from "@/components/Loader";
-import AddTransactionForm from "@/app/dashboard/AddTransactionForm";
 import {
   useDeleteTransactionMutation,
   useGetTransactionsQuery,
@@ -21,25 +19,59 @@ import { CATEGORIES, errorMessage, formatMoney, monthKey } from "@/lib/finance";
 import { useToast } from "@/lib/ToasteContext";
 import { Transaction } from "@/types/transaction.type";
 
+const Page = styled.div`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
 const Toolbar = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-bottom: 1rem;
+  flex-shrink: 0;
+
+  & > * {
+    flex: 1 1 180px;
+    max-width: 280px;
+  }
+
+  @media (max-width: 768px) {
+    & > * {
+      flex-basis: 100%;
+      max-width: none;
+    }
+  }
 `;
 
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
+const TableScroll = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
   background: ${({ theme }) => theme.cardBg};
   border: 1px solid ${({ theme }) => theme.border};
   border-radius: ${({ theme }) => theme.radius.lg};
 `;
 
+const Table = styled.table`
+  width: 100%;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
+`;
+
 const Th = styled.th`
+  position: sticky;
+  top: 0;
+  z-index: 1;
   text-align: left;
   padding: 0.75rem;
   color: ${({ theme }) => theme.textSecondary};
+  background: ${({ theme }) => theme.cardBg};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
 `;
 
 const Td = styled.td`
@@ -48,20 +80,32 @@ const Td = styled.td`
   color: ${({ theme }) => theme.textPrimary};
 `;
 
-const Badge = styled.span`
-  margin-left: 0.35rem;
-  font-size: 0.75rem;
-  color: ${({ theme }) => theme.primary};
-`;
-
 const Pager = styled.div`
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
   gap: 0.5rem;
   margin-top: 1rem;
 `;
 
 const Empty = styled.p`
+  color: ${({ theme }) => theme.textSecondary};
+`;
+
+const EditForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const Field = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+`;
+
+const Label = styled.label`
+  font-size: 0.875rem;
   color: ${({ theme }) => theme.textSecondary};
 `;
 
@@ -71,9 +115,7 @@ export default function TransactionsPage() {
   const month = monthKey(currentDate);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [txType, setTxType] = useState("");
   const [category, setCategory] = useState("");
-  const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const { showToast } = useToast();
   const { data, isLoading, isError } = useGetTransactionsQuery(
@@ -81,7 +123,6 @@ export default function TransactionsPage() {
       month,
       page,
       search: search || undefined,
-      tx_type: txType || undefined,
       category: category || undefined,
     },
     { skip: !authed }
@@ -101,14 +142,10 @@ export default function TransactionsPage() {
   };
 
   return (
-    <AppShell onAddTransaction={() => setOpen(true)}>
+    <>
+      <Page>
       <Toolbar>
         <Input placeholder="Search" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} />
-        <Select value={txType} onChange={(event) => { setTxType(event.target.value); setPage(1); }}>
-          <option value="">All types</option>
-          <option value="expense">Expense</option>
-          <option value="income">Income</option>
-        </Select>
         <Select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }}>
           <option value="">All categories</option>
           {CATEGORIES.map((item) => (
@@ -129,17 +166,17 @@ export default function TransactionsPage() {
           />
         </Button>
       </Toolbar>
-      {isLoading && <Loader size="md" />}
+      {isLoading && <Loader size="md" center />}
       {isError && <Empty>Could not load transactions.</Empty>}
       {data && data.items.length === 0 && <Empty>No transactions for this month.</Empty>}
       {data && data.items.length > 0 && (
+        <TableScroll>
         <Table>
           <thead>
             <tr>
               <Th>Date</Th>
               <Th>Description</Th>
               <Th>Category</Th>
-              <Th>Type</Th>
               <Th>Amount</Th>
               <Th></Th>
             </tr>
@@ -149,11 +186,7 @@ export default function TransactionsPage() {
               <tr key={tx.id}>
                 <Td>{tx.date}</Td>
                 <Td>{tx.desc || tx.merchant || "—"}</Td>
-                <Td>
-                  {tx.status === "pending" ? "Categorizing…" : tx.category}
-                  {tx.category_source === "ai" && <Badge>AI</Badge>}
-                </Td>
-                <Td>{tx.tx_type}</Td>
+                <Td>{tx.status === "pending" || tx.category === "pending" ? "miscellaneous" : tx.category}</Td>
                 <Td>{formatMoney(tx.amount)}</Td>
                 <Td>
                   <Button type="button" $variant="ghost" onClick={() => setEditing(tx)}>Edit</Button>
@@ -176,6 +209,7 @@ export default function TransactionsPage() {
             ))}
           </tbody>
         </Table>
+        </TableScroll>
       )}
       {data && data.total > data.page_size && (
         <Pager>
@@ -187,12 +221,11 @@ export default function TransactionsPage() {
           </Button>
         </Pager>
       )}
-      <Modal isOpen={open} onClose={() => setOpen(false)} title="Add transaction">
-        <AddTransactionForm onSuccess={() => setOpen(false)} />
-      </Modal>
+      </Page>
       <Modal isOpen={Boolean(editing)} onClose={() => setEditing(null)} title="Edit transaction">
         {editing && (
-          <form
+          <EditForm
+            key={editing.id}
             onSubmit={async (event) => {
               event.preventDefault();
               const form = new FormData(event.currentTarget);
@@ -201,9 +234,10 @@ export default function TransactionsPage() {
                   id: editing.id,
                   amount: Number(form.get("amount")),
                   desc: String(form.get("desc") || ""),
+                  merchant: String(form.get("merchant") || ""),
                   category: String(form.get("category") || editing.category),
-                  tx_type: String(form.get("tx_type") || "expense") as "expense" | "income",
-                  date: editing.date,
+                  tx_type: "expense",
+                  date: String(form.get("date") || editing.date),
                 }).unwrap();
                 showToast("Transaction updated", "success");
                 setEditing(null);
@@ -212,23 +246,37 @@ export default function TransactionsPage() {
               }
             }}
           >
-            <Input name="amount" type="number" defaultValue={editing.amount} required />
-            <Input name="desc" defaultValue={editing.desc || ""} />
-            <Select name="category" defaultValue={editing.category}>
-              {CATEGORIES.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
-            </Select>
-            <Select name="tx_type" defaultValue={editing.tx_type || "expense"}>
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
-            </Select>
-            <Button type="submit" $variant="primary" disabled={saving} style={{ marginTop: "1rem" }}>
-              Save
+            <Field>
+              <Label htmlFor="edit-date">Date</Label>
+              <Input id="edit-date" name="date" type="date" defaultValue={editing.date} required />
+            </Field>
+            <Field>
+              <Label htmlFor="edit-amount">Amount</Label>
+              <Input id="edit-amount" name="amount" type="number" min="0" step="0.01" defaultValue={editing.amount} required />
+            </Field>
+            <Field>
+              <Label htmlFor="edit-desc">Description</Label>
+              <Input id="edit-desc" name="desc" type="text" defaultValue={editing.desc || ""} placeholder="What was this for?" />
+            </Field>
+            <Field>
+              <Label htmlFor="edit-merchant">Merchant</Label>
+              <Input id="edit-merchant" name="merchant" type="text" defaultValue={editing.merchant || ""} placeholder="Optional" />
+            </Field>
+            <Field>
+              <Label htmlFor="edit-category">Category</Label>
+              <Select id="edit-category" name="category" defaultValue={editing.category === "pending" ? "auto" : editing.category}>
+                <option value="auto">Auto</option>
+                {CATEGORIES.map((item) => (
+                  <option key={item} value={item}>{item}</option>
+                ))}
+              </Select>
+            </Field>
+            <Button type="submit" $variant="primary" disabled={saving}>
+              {saving ? "Saving..." : "Save"}
             </Button>
-          </form>
+          </EditForm>
         )}
       </Modal>
-    </AppShell>
+    </>
   );
 }

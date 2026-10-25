@@ -3,12 +3,15 @@ import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolk
 import { Budget, BudgetCompare, BudgetCreate } from "@/types/budget.type";
 import { Transaction, TransactionCreate } from "@/types/transaction.type";
 import { UserResponse } from "@/types/user.type";
+import { apiBaseUrl } from "@/lib/apiBase";
 import { closeSession, isSessionClosed, openSession } from "@/lib/session";
 import { loginUser, logoutUser } from "./slices/userSlice";
 
 export type DashboardResponse = {
   month: string;
   income: number;
+  monthly_income: number | null;
+  income_description: string | null;
   expenses: number;
   net: number;
   savings_rate: number;
@@ -61,7 +64,7 @@ export type Job = {
 type AuthPayload = { user: UserResponse };
 
 const rawBaseQuery = fetchBaseQuery({
-  baseUrl: "/api/v1",
+  baseUrl: apiBaseUrl(),
   credentials: "include",
 });
 
@@ -160,6 +163,13 @@ export const spendApi = createApi({
     getWsTicket: builder.query<{ ticket: string }, void>({
       query: () => "/auth/ws-ticket",
     }),
+    setMonthlyIncome: builder.mutation<
+      { month: string; amount: number; description: string | null },
+      { month: string; amount: number; description?: string }
+    >({
+      query: (body) => ({ url: "/income", method: "PUT", body }),
+      invalidatesTags: ["Dashboard"],
+    }),
     getDashboard: builder.query<DashboardResponse, string>({
       query: (month) => `/dashboard?month=${month}`,
       providesTags: (_result, _error, month) => [{ type: "Dashboard", id: month }],
@@ -170,12 +180,12 @@ export const spendApi = createApi({
         if (search) params.set("search", search);
         if (tx_type) params.set("tx_type", tx_type);
         if (category) params.set("category", category);
-        return `/transactions/?${params.toString()}`;
+        return `/transactions?${params.toString()}`;
       },
       providesTags: ["Transaction"],
     }),
     addTransaction: builder.mutation<Transaction, TransactionCreate>({
-      query: (body) => ({ url: "/transactions/", method: "POST", body }),
+      query: (body) => ({ url: "/transactions", method: "POST", body }),
       invalidatesTags: ["Dashboard", "Transaction"],
     }),
     updateTransaction: builder.mutation<Transaction, { id: string } & Partial<TransactionCreate>>({
@@ -191,7 +201,7 @@ export const spendApi = createApi({
       invalidatesTags: ["Dashboard", "Transaction"],
     }),
     addBudget: builder.mutation<Budget, BudgetCreate>({
-      query: (body) => ({ url: "/budgets/", method: "POST", body }),
+      query: (body) => ({ url: "/budgets", method: "POST", body }),
       invalidatesTags: ["Dashboard", "Budget"],
     }),
     deleteBudget: builder.mutation<{ message: string }, string>({
@@ -199,11 +209,11 @@ export const spendApi = createApi({
       invalidatesTags: ["Dashboard", "Budget"],
     }),
     getGoals: builder.query<Goal[], void>({
-      query: () => "/goals/",
+      query: () => "/goals",
       providesTags: ["Goal"],
     }),
     addGoal: builder.mutation<Goal, { name: string; target_amount: number; current_amount: number; deadline?: string | null }>({
-      query: (body) => ({ url: "/goals/", method: "POST", body }),
+      query: (body) => ({ url: "/goals", method: "POST", body }),
       invalidatesTags: ["Goal"],
     }),
     updateGoal: builder.mutation<Goal, { id: string; current_amount?: number; name?: string; target_amount?: number }>({
@@ -234,6 +244,7 @@ export const {
   useLogoutMutation,
   useLazyGetWsTicketQuery,
   useGetDashboardQuery,
+  useSetMonthlyIncomeMutation,
   useGetTransactionsQuery,
   useAddTransactionMutation,
   useUpdateTransactionMutation,

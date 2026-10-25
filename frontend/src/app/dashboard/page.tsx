@@ -2,18 +2,18 @@
 
 import { useState } from "react";
 import styled from "styled-components";
-import AppShell from "@/components/AppShell";
 import DashboardCard from "./DashboardCard";
 import BudgetSummary from "./BudgetSummary";
 import SpendingChart from "./SpendingChart";
-import Modal from "@/components/Modal";
-import AddTransactionForm from "./AddTransactionForm";
-import AddBudgetForm from "./AddBudgetForm";
 import Loader from "@/components/Loader";
-import { useGetDashboardQuery } from "@/redux/api";
+import Modal from "@/components/Modal";
+import { Button } from "@/components/Button";
+import { Input } from "@/components/Input";
+import { useGetDashboardQuery, useSetMonthlyIncomeMutation } from "@/redux/api";
 import { useAppSelector } from "@/redux/hooks";
 import { userAuthenticatedSelector, userCurrentDateSelector } from "@/redux/slices/userSlice";
-import { formatMoney, monthKey } from "@/lib/finance";
+import { errorMessage, formatMoney, monthKey } from "@/lib/finance";
+import { useToast } from "@/lib/ToasteContext";
 
 const Grid = styled.div`
   display: grid;
@@ -59,16 +59,61 @@ const StatValue = styled.div`
   color: ${({ theme }) => theme.textPrimary};
 `;
 
+const StatNote = styled.div`
+  margin-top: 0.35rem;
+  color: ${({ theme }) => theme.textSecondary};
+  font-size: 0.85rem;
+`;
+
+const FieldLabel = styled.label`
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.textSecondary};
+`;
+
+const IncomeAction = styled.button`
+  margin-top: 0.65rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: ${({ theme }) => theme.primary};
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+`;
+
+const IncomeForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const Field = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+`;
+
+const TableScroll = styled.div`
+  max-height: 280px;
+  overflow: auto;
+`;
+
 const Table = styled.table`
   width: 100%;
-  border-collapse: collapse;
+  min-width: 520px;
+  border-collapse: separate;
+  border-spacing: 0;
 `;
 
 const Th = styled.th`
+  position: sticky;
+  top: 0;
+  z-index: 1;
   text-align: left;
   padding: 0.6rem;
   color: ${({ theme }) => theme.textSecondary};
   font-size: 0.8rem;
+  background: ${({ theme }) => theme.cardBg};
 `;
 
 const Td = styled.td`
@@ -82,19 +127,25 @@ const Empty = styled.p`
 `;
 
 export default function DashboardPage() {
-  const [showTransactionModal, setShowTransactionModal] = useState(false);
-  const [showBudgetModal, setShowBudgetModal] = useState(false);
   const currentDate = useAppSelector(userCurrentDateSelector);
   const authed = useAppSelector(userAuthenticatedSelector);
   const month = monthKey(currentDate);
   const { data, isLoading, isError } = useGetDashboardQuery(month, { skip: !authed });
+  const [incomeOpen, setIncomeOpen] = useState(false);
+  const [incomeAmount, setIncomeAmount] = useState("");
+  const [incomeDescription, setIncomeDescription] = useState("");
+  const [setIncome, { isLoading: savingIncome }] = useSetMonthlyIncomeMutation();
+  const { showToast } = useToast();
+
+  const openIncome = () => {
+    setIncomeAmount(data?.income ? String(data.income) : "");
+    setIncomeDescription(data?.income_description || "");
+    setIncomeOpen(true);
+  };
 
   return (
-    <AppShell
-      onAddTransaction={() => setShowTransactionModal(true)}
-      onAddBudget={() => setShowBudgetModal(true)}
-    >
-      {isLoading && <Loader size="md" />}
+    <>
+      {isLoading && <Loader size="md" center />}
       {isError && <Empty>Could not load this month.</Empty>}
       {data && (
         <>
@@ -102,6 +153,10 @@ export default function DashboardPage() {
             <Stat>
               <StatLabel>Income</StatLabel>
               <StatValue>{formatMoney(data.income)}</StatValue>
+              {data.income_description && <StatNote>{data.income_description}</StatNote>}
+              <IncomeAction type="button" onClick={openIncome}>
+                {data.monthly_income == null ? "Set income" : "Update income"}
+              </IncomeAction>
             </Stat>
             <Stat>
               <StatLabel>Expenses</StatLabel>
@@ -117,7 +172,7 @@ export default function DashboardPage() {
             </Stat>
           </Grid>
           <Cards>
-            <DashboardCard title="Budget vs actual">
+            <DashboardCard title="Budget vs Actual">
               <BudgetSummary rows={data.budget_vs_actual} />
             </DashboardCard>
             <DashboardCard title="Spending by category">
@@ -129,6 +184,7 @@ export default function DashboardPage() {
               {data.transactions.length === 0 ? (
                 <Empty>Add a transaction to see it here.</Empty>
               ) : (
+                <TableScroll>
                 <Table>
                   <thead>
                     <tr>
@@ -139,19 +195,17 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.transactions.slice(0, 6).map((tx) => (
+                    {data.transactions.map((tx) => (
                       <tr key={tx.id}>
                         <Td>{tx.date}</Td>
                         <Td>{tx.desc || tx.merchant || "—"}</Td>
-                        <Td>
-                          {tx.category}
-                          {tx.category_source === "ai" ? " · AI" : ""}
-                        </Td>
+                        <Td>{tx.status === "pending" || tx.category === "pending" ? "miscellaneous" : tx.category}</Td>
                         <Td>{formatMoney(tx.amount)}</Td>
                       </tr>
                     ))}
                   </tbody>
                 </Table>
+                </TableScroll>
               )}
             </DashboardCard>
             <DashboardCard title="Budget health" height="auto">
@@ -161,12 +215,56 @@ export default function DashboardPage() {
           </Cards>
         </>
       )}
-      <Modal isOpen={showTransactionModal} onClose={() => setShowTransactionModal(false)} title="Add transaction">
-        <AddTransactionForm onSuccess={() => setShowTransactionModal(false)} />
+      <Modal
+        isOpen={incomeOpen}
+        onClose={() => setIncomeOpen(false)}
+        title={data?.monthly_income == null ? "Set income" : "Update income"}
+      >
+        <IncomeForm
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const amount = Number(incomeAmount);
+            if (Number.isNaN(amount) || amount < 0) {
+              showToast("Enter an income of zero or more.", "error");
+              return;
+            }
+            try {
+              await setIncome({ month, amount, description: incomeDescription }).unwrap();
+              showToast("Income saved", "success");
+              setIncomeOpen(false);
+            } catch (error) {
+              showToast(errorMessage(error, "Could not save income"), "error");
+            }
+          }}
+        >
+          <Field>
+            <FieldLabel htmlFor="income-amount">Amount</FieldLabel>
+            <Input
+              id="income-amount"
+              type="number"
+              min="0"
+              step="0.01"
+              value={incomeAmount}
+              onChange={(event) => setIncomeAmount(event.target.value)}
+              placeholder="Monthly income"
+              required
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="income-description">Description</FieldLabel>
+            <Input
+              id="income-description"
+              type="text"
+              value={incomeDescription}
+              onChange={(event) => setIncomeDescription(event.target.value)}
+              placeholder="Where this income comes from"
+            />
+          </Field>
+          <Button type="submit" $variant="primary" disabled={savingIncome}>
+            {savingIncome ? "Saving..." : "Save"}
+          </Button>
+        </IncomeForm>
       </Modal>
-      <Modal isOpen={showBudgetModal} onClose={() => setShowBudgetModal(false)} title="Add budget">
-        <AddBudgetForm onSuccess={() => setShowBudgetModal(false)} />
-      </Modal>
-    </AppShell>
+    </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { wsBaseUrl } from "@/lib/apiBase";
 import { spendApi, useLazyGetWsTicketQuery } from "@/redux/api";
 import { useAppDispatch } from "@/redux/hooks";
 
@@ -19,14 +20,25 @@ export function useBudgetStream(enabled: boolean) {
       try {
         const ticket = await fetchTicketRef.current().unwrap();
         if (closed) return;
-        const base = process.env.NEXT_PUBLIC_WS_URL || "ws://127.0.0.1:8000";
-        socket = new WebSocket(`${base}/ws/v1/budget?ticket=${ticket.ticket}`);
-        socket.onmessage = (event) => {
+        const base = wsBaseUrl();
+        const next = new WebSocket(`${base}/ws/v1/budget?ticket=${ticket.ticket}`);
+        socket = next;
+        if (closed) {
+          next.close();
+          return;
+        }
+        next.onmessage = (event) => {
           const message = JSON.parse(event.data);
           if (message.type !== "budget_vs_actual" || !message.month) return;
           dispatch(
             spendApi.util.updateQueryData("getDashboard", message.month, (draft) => {
               draft.income = message.income;
+              if ("monthly_income" in message) {
+                draft.monthly_income = message.monthly_income;
+              }
+              if ("income_description" in message) {
+                draft.income_description = message.income_description;
+              }
               draft.expenses = message.expenses;
               draft.net = message.net;
               draft.savings_rate = message.savings_rate;

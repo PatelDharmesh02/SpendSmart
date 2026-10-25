@@ -4,10 +4,13 @@ import { PresentionChart, AddCircle, LogoutCurve } from "iconsax-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/Button";
 import { userNameSelector } from "@/redux/slices/userSlice";
+import Tooltip from "@/components/Tooltip";
 import { useAppSelector } from "@/redux/hooks";
 import { HambergerMenu, CloseCircle } from "iconsax-react";
 
 const HeaderContainer = styled.header`
+  position: relative;
+  flex-shrink: 0;
   background: ${({ theme }) => theme.cardBg || "#f8f9fa"};
   border-bottom: 1px solid ${({ theme }) => theme.border || "#dee2e6"};
   display: flex;
@@ -16,12 +19,23 @@ const HeaderContainer = styled.header`
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 1rem;
   height: 4rem;
+  gap: 0.75rem;
+
+  @media (max-width: 768px) {
+    padding: 0.75rem 1rem;
+  }
 `;
 
 const HeaderTitle = styled.p`
   color: ${({ theme }) => theme.textPrimary || "#343a40"};
   font-size: 1.8rem;
   font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+  }
 `;
 
 const AppLogoContainer = styled.div`
@@ -41,8 +55,19 @@ const HeaderActionButtons = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
+
+  @media (max-width: 1100px) {
+    gap: 0.5rem;
+  }
 
   @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const ActionLabel = styled.span`
+  @media (max-width: 1100px) {
     display: none;
   }
 `;
@@ -140,20 +165,23 @@ const Header: React.FC<HeaderProps> = ({
 
       <HeaderActionContainer>
         <HeaderActionButtons>
-          <ButtonWrapper $variant="primary" onClick={onAddTransaction}>
-            <AddCircle size="24" color={theme.surface} variant="Outline" />
-            Add Transaction
-          </ButtonWrapper>
-          <ButtonWrapper $variant="primary" onClick={onAddBudget}>
-            <AddCircle size="24" color={theme.surface} variant="Outline" />
-            Add Budget
-          </ButtonWrapper>
-          <Avatar>{userName ? userName.charAt(0).toUpperCase() : "U"}</Avatar>
-          {handleLogout && (
-            <ButtonWrapper $variant="primary" onClick={handleLogout}>
-              <LogoutCurve size="24" color={theme.surface} variant="Outline" />
+          <Tooltip label="Add Transaction" placement="bottom">
+            <ButtonWrapper $variant="primary" onClick={onAddTransaction} aria-label="Add Transaction">
+              <AddCircle size="24" color={theme.surface} variant="Outline" />
+              <ActionLabel data-tooltip-text>Add Transaction</ActionLabel>
             </ButtonWrapper>
-          )}
+          </Tooltip>
+          <Tooltip label="Add Budget" placement="bottom">
+            <ButtonWrapper $variant="primary" onClick={onAddBudget} aria-label="Add Budget">
+              <AddCircle size="24" color={theme.surface} variant="Outline" />
+              <ActionLabel data-tooltip-text>Add Budget</ActionLabel>
+            </ButtonWrapper>
+          </Tooltip>
+          <Tooltip label={userName || "Account"} placement="bottom">
+            <Avatar>
+              <span data-tooltip-text>{userName ? userName.charAt(0).toUpperCase() : "U"}</span>
+            </Avatar>
+          </Tooltip>
         </HeaderActionButtons>
         <MenuButtonWrapper
           $variant="outline"

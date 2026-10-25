@@ -1,12 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import styled from "styled-components";
-import AppShell from "@/components/AppShell";
-import Modal from "@/components/Modal";
 import Loader from "@/components/Loader";
 import { Button } from "@/components/Button";
-import AddBudgetForm from "@/app/dashboard/AddBudgetForm";
 import BudgetSummary from "@/app/dashboard/BudgetSummary";
 import { useDeleteBudgetMutation, useGetDashboardQuery } from "@/redux/api";
 import { useAppSelector } from "@/redux/hooks";
@@ -48,13 +44,12 @@ export default function BudgetsPage() {
   const month = monthKey(useAppSelector(userCurrentDateSelector));
   const authed = useAppSelector(userAuthenticatedSelector);
   const { data, isLoading, isError } = useGetDashboardQuery(month, { skip: !authed });
-  const [open, setOpen] = useState(false);
   const [remove] = useDeleteBudgetMutation();
   const { showToast } = useToast();
 
   return (
-    <AppShell onAddBudget={() => setOpen(true)}>
-      {isLoading && <Loader size="md" />}
+    <>
+      {isLoading && <Loader size="md" center />}
       {isError && <Empty>Could not load budgets.</Empty>}
       {data && (
         <Layout>
@@ -89,9 +84,6 @@ export default function BudgetsPage() {
           </Panel>
         </Layout>
       )}
-      <Modal isOpen={open} onClose={() => setOpen(false)} title="Add budget">
-        <AddBudgetForm onSuccess={() => setOpen(false)} />
-      </Modal>
-    </AppShell>
+    </>
   );
 }

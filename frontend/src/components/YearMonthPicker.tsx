@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { Calendar } from 'iconsax-react';
 import styled, { useTheme } from 'styled-components';
 
@@ -81,31 +81,45 @@ const months = [
     'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
+// Redux stores month as 1–12. The <select> options are 0–11.
+function monthIndex(month: number | undefined): number {
+    if (!month) return new Date().getMonth();
+    return Math.min(11, Math.max(0, month - 1));
+}
+
 const YearMonthDropdown: React.FC<Props> = ({
     value,
     onApply,
 }) => {
     const now = new Date();
-    const initialYear = value?.year ?? now.getFullYear();
-    const initialMonth = value?.month ?? now.getMonth();
-
     const [isOpen, setIsOpen] = useState(false);
-    const [tempYear, setTempYear] = useState(initialYear);
-    const [tempMonth, setTempMonth] = useState(initialMonth);
+    const [tempYear, setTempYear] = useState(value?.year ?? now.getFullYear());
+    const [tempMonth, setTempMonth] = useState(monthIndex(value?.month));
 
     const wrapperRef = useRef<HTMLDivElement>(null);
     const theme = useTheme();
 
+    const restoreSelection = useCallback(() => {
+        setTempYear(value?.year ?? new Date().getFullYear());
+        setTempMonth(monthIndex(value?.month));
+    }, [value?.year, value?.month]);
+
+    useEffect(() => {
+        restoreSelection();
+    }, [restoreSelection]);
+
     const openDropdown = () => {
+        if (!isOpen) restoreSelection();
         setIsOpen(!isOpen);
     };
 
     const handleApply = () => {
-        onApply({ year: tempYear, month: tempMonth < 10 ? Number(`0${tempMonth + 1}`) : tempMonth });
+        onApply({ year: tempYear, month: tempMonth + 1 });
         setIsOpen(false);
     };
 
     const handleCancel = () => {
+        restoreSelection();
         setIsOpen(false);
     };
 
@@ -113,6 +127,7 @@ const YearMonthDropdown: React.FC<Props> = ({
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                restoreSelection();
                 setIsOpen(false);
             }
         };
@@ -120,7 +135,7 @@ const YearMonthDropdown: React.FC<Props> = ({
             document.addEventListener('mousedown', handleClickOutside);
         }
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [isOpen]);
+    }, [isOpen, restoreSelection]);
 
     return (
         <Wrapper ref={wrapperRef}>

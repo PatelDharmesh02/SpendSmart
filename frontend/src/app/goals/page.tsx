@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import styled from "styled-components";
-import AppShell from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import Loader from "@/components/Loader";
-import { useAddGoalMutation, useDeleteGoalMutation, useGetGoalsQuery, useUpdateGoalMutation } from "@/redux/api";
+import Modal from "@/components/Modal";
+import { Goal, useAddGoalMutation, useDeleteGoalMutation, useGetGoalsQuery, useUpdateGoalMutation } from "@/redux/api";
 import { useAppSelector } from "@/redux/hooks";
 import { userAuthenticatedSelector } from "@/redux/slices/userSlice";
 import { errorMessage, formatMoney } from "@/lib/finance";
@@ -50,20 +50,33 @@ const Fill = styled.div<{ $width: number }>`
   background: ${({ theme }) => theme.primary};
 `;
 
+const UpdateForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const FieldLabel = styled.label`
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.textSecondary};
+`;
+
 export default function GoalsPage() {
   const authed = useAppSelector(userAuthenticatedSelector);
   const { data, isLoading } = useGetGoalsQuery(undefined, { skip: !authed });
   const [addGoal, { isLoading: saving }] = useAddGoalMutation();
-  const [updateGoal] = useUpdateGoalMutation();
+  const [updateGoal, { isLoading: updating }] = useUpdateGoalMutation();
   const [remove] = useDeleteGoalMutation();
   const { showToast } = useToast();
   const [name, setName] = useState("");
   const [target, setTarget] = useState("");
   const [saved, setSaved] = useState("");
   const [deadline, setDeadline] = useState("");
+  const [editing, setEditing] = useState<Goal | null>(null);
+  const [savedAmount, setSavedAmount] = useState("");
 
   return (
-    <AppShell>
+    <>
       <Panel>
         <h2>Savings goals</h2>
         <Form
@@ -93,8 +106,8 @@ export default function GoalsPage() {
           <Button type="submit" $variant="primary" disabled={saving}>Add</Button>
         </Form>
       </Panel>
-      <Panel>
-        {isLoading && <Loader size="md" />}
+      <Panel style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", marginBottom: 0 }}>
+        {isLoading && <Loader size="md" center />}
         {data?.length === 0 && <p>No goals yet.</p>}
         {data?.map((goal) => {
           const width = goal.target_amount > 0 ? Math.min(100, (goal.current_amount / goal.target_amount) * 100) : 0;
@@ -111,14 +124,9 @@ export default function GoalsPage() {
               <Button
                 type="button"
                 $variant="outline"
-                onClick={async () => {
-                  const next = window.prompt("Saved so far", String(goal.current_amount));
-                  if (next === null) return;
-                  try {
-                    await updateGoal({ id: goal.id, current_amount: Number(next) }).unwrap();
-                  } catch (error) {
-                    showToast(errorMessage(error, "Could not update goal"), "error");
-                  }
+                onClick={() => {
+                  setEditing(goal);
+                  setSavedAmount(String(goal.current_amount));
                 }}
               >
                 Update saved
@@ -140,6 +148,44 @@ export default function GoalsPage() {
           );
         })}
       </Panel>
-    </AppShell>
+      <Modal
+        isOpen={Boolean(editing)}
+        onClose={() => setEditing(null)}
+        title={editing ? `Update saved · ${editing.name}` : "Update saved"}
+      >
+        <UpdateForm
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (!editing) return;
+            const amount = Number(savedAmount);
+            if (Number.isNaN(amount) || amount < 0) {
+              showToast("Enter a saved amount of zero or more.", "error");
+              return;
+            }
+            try {
+              await updateGoal({ id: editing.id, current_amount: amount }).unwrap();
+              showToast("Saved amount updated", "success");
+              setEditing(null);
+            } catch (error) {
+              showToast(errorMessage(error, "Could not update goal"), "error");
+            }
+          }}
+        >
+          <FieldLabel htmlFor="saved-amount">Saved so far</FieldLabel>
+          <Input
+            id="saved-amount"
+            type="number"
+            min="0"
+            step="0.01"
+            value={savedAmount}
+            onChange={(event) => setSavedAmount(event.target.value)}
+            required
+          />
+          <Button type="submit" $variant="primary" disabled={updating}>
+            {updating ? "Saving..." : "Save"}
+          </Button>
+        </UpdateForm>
+      </Modal>
+    </>
   );
 }

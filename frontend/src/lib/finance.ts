@@ -1,3 +1,4 @@
+import { apiBaseUrl } from "@/lib/apiBase";
 import { DateFormat } from "@/types/user.type";
 
 export function monthKey(date: DateFormat): string {
@@ -27,7 +28,7 @@ export const CATEGORIES = [
 ];
 
 export function startOAuth(provider: "google" | "github") {
-  window.location.href = `/api/v1/auth/oauth/${provider}`;
+  window.location.href = `${apiBaseUrl()}/auth/oauth/${provider}`;
 }
 
 export function errorMessage(error: unknown, fallback: string): string {
