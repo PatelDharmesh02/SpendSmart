@@ -9,18 +9,18 @@ function configuredApiUrl(): string | undefined {
   return trimmed || undefined;
 }
 
-/** Browser-facing API root, including the /api/v1 prefix. */
+/**
+ * Browser-facing API root, including the /api/v1 prefix.
+ * Always same-origin. spend-smart-frontend and spend-smart-backend are
+ * different sites (vercel.app is a public suffix), so a cookie set by the
+ * API host is never sent on the later /auth/me call. The app route proxies
+ * /api/v1 to the API and the session cookie stays on the frontend host.
+ */
 export function apiBaseUrl(): string {
-  const configured = configuredApiUrl();
-  if (!configured) return "/api/v1";
-  // Loopback stays on the Next rewrite so local auth cookies stay first-party.
-  if (process.env.NEXT_PUBLIC_APP_ENV !== "production" && LOOPBACK.test(configured)) {
-    return "/api/v1";
-  }
-  return configured;
+  return "/api/v1";
 }
 
-/** Origin the Next rewrite should forward /api/v1 to. */
+/** Origin the /api/v1 route forwards to. */
 export function apiProxyTarget(): string {
   const configured = configuredApiUrl();
   if (configured && !configured.startsWith("/")) {

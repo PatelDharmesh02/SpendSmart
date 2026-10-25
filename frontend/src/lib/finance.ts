@@ -1,4 +1,4 @@
-import { apiBaseUrl } from "@/lib/apiBase";
+import { apiProxyTarget } from "@/lib/apiBase";
 import { DateFormat } from "@/types/user.type";
 
 export function monthKey(date: DateFormat): string {
@@ -28,7 +28,9 @@ export const CATEGORIES = [
 ];
 
 export function startOAuth(provider: "google" | "github") {
-  window.location.href = `${apiBaseUrl()}/auth/oauth/${provider}`;
+  // The provider sends the browser back to the API host, so this navigation
+  // has to start there too. The session cookie for that hop lives on the API.
+  window.location.href = `${apiProxyTarget()}/api/v1/auth/oauth/${provider}`;
 }
 
 export function errorMessage(error: unknown, fallback: string): string {
