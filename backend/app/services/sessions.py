@@ -53,6 +53,20 @@ def clear_auth_cookies(response: Response) -> None:
     response.delete_cookie("refresh_token", path="/api/v1/auth", secure=secure, samesite=samesite)
 
 
+def issue_oauth_handoff(db: Session, user: User) -> str:
+    """One-time code the browser trades on the frontend host for session cookies."""
+    raw = secrets.token_urlsafe(32)
+    db.add(
+        RefreshToken(
+            user_id=user.id,
+            token_hash=hash_token(raw),
+            expires_at=datetime.utcnow() + timedelta(seconds=60),
+        )
+    )
+    db.commit()
+    return raw
+
+
 def issue_session(response: Response, db: Session, user: User) -> str:
     access = create_access_token({"sub": str(user.id), "type": "access"})
     raw_refresh = secrets.token_urlsafe(48)
