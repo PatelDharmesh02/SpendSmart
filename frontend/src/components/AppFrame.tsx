@@ -1,0 +1,10 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import AppShell from "@/components/AppShell";
+
+export default function AppFrame({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  if (pathname === "/" || pathname.startsWith("/auth")) return children;
+  return <AppShell>{children}</AppShell>;
+}

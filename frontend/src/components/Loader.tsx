@@ -30,51 +30,58 @@ const LoadingText = styled.div`
 `;
 
 const Dot = styled.div<{
-  $index: number;
   $size: number;
   $color: string;
 }>`
   position: absolute;
+  top: 50%;
+  left: 50%;
   width: ${({ $size }) => $size * 0.15}px;
   height: ${({ $size }) => $size * 0.15}px;
+  margin-top: ${({ $size }) => $size * -0.075}px;
+  margin-left: ${({ $size }) => $size * -0.075}px;
   border-radius: 50%;
   background-color: ${({ $color }) => $color};
-  top: ${({ $index, $size }) => {
-    const angle = $index * 30 * Math.PI / 180;
-    return $size / 2 - Math.cos(angle) * $size * 0.4;
-  }}px;
-  left: ${({ $index, $size }) => {
-    const angle = $index * 30 * Math.PI / 180;
-    return $size / 2 + Math.sin(angle) * $size * 0.4;
-  }}px;
-  transform: translate(-50%, -50%);
+`;
+
+const Center = styled.div`
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 interface LoaderProps {
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
+  center?: boolean;
 }
 
-const Loader = ({ size = 'md', showText = true }: LoaderProps) => {
+const Loader = ({ size = 'md', showText = true, center = false }: LoaderProps) => {
   const theme = useTheme();
   const sizePx = size === 'sm' ? 30 : size === 'md' ? 50 : 80;
   const primaryColor = theme.primary;
 
-  return (
+  const spinner = (
     <LoaderContainer size={sizePx}>
       <SpinnerContainer size={sizePx}>
         {Array.from({ length: 12 }).map((_, i) => (
           <Dot
             key={i}
-            $index={i}
             $size={sizePx}
             $color={primaryColor}
+            style={{ transform: `rotate(${i * 30}deg) translateY(-${sizePx * 0.4}px)` }}
           />
         ))}
       </SpinnerContainer>
       {showText && <LoadingText>Loading...</LoadingText>}
     </LoaderContainer>
   );
+
+  if (center) return <Center>{spinner}</Center>;
+  return spinner;
 };
 
 export default Loader;

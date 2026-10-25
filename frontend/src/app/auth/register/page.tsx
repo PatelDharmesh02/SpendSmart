@@ -17,10 +17,17 @@ const RegisterContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: ${({ theme }) => theme.background || "#fff"};
+
+  @media (max-height: 700px) {
+    align-items: flex-start;
+    padding: 1.5rem 0;
+  }
 `;
 
 const AnimationWrapper = styled.div`
@@ -206,7 +213,8 @@ const LoaderWrapper = styled.div`
   align-items: center;
   justify-content: center;
   height: 100vh;
-  width: 100vw;
+  height: 100dvh;
+  width: 100%;
 `;
 
 const passwordRequirements = [

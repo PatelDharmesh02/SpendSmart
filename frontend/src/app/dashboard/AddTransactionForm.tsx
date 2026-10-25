@@ -41,7 +41,6 @@ export default function AddTransactionForm({ onSuccess }: { onSuccess: () => voi
   const [description, setDescription] = useState("");
   const [merchant, setMerchant] = useState("");
   const [category, setCategory] = useState("auto");
-  const [txType, setTxType] = useState<"expense" | "income">("expense");
   const [transactionDate, setTransactionDate] = useState(new Date());
   const [error, setError] = useState("");
 
@@ -59,7 +58,7 @@ export default function AddTransactionForm({ onSuccess }: { onSuccess: () => voi
         category: category || "auto",
         desc: description,
         merchant,
-        tx_type: txType,
+        tx_type: "expense",
       }).unwrap();
       showToast("Transaction added", "success");
       onSuccess();
@@ -78,13 +77,6 @@ export default function AddTransactionForm({ onSuccess }: { onSuccess: () => voi
         <DateDropdownPicker value={transactionDate} onApply={setTransactionDate} width="100%" />
       </FormGroup>
       <FormGroup>
-        <Label>Type</Label>
-        <Select value={txType} onChange={(event) => setTxType(event.target.value as "expense" | "income")}>
-          <option value="expense">Expense</option>
-          <option value="income">Income</option>
-        </Select>
-      </FormGroup>
-      <FormGroup>
         <Label>Amount</Label>
         <Input type="number" value={amount} onChange={(event) => setAmount(event.target.value)} required placeholder="0.00" />
       </FormGroup>
@@ -99,7 +91,7 @@ export default function AddTransactionForm({ onSuccess }: { onSuccess: () => voi
       <FormGroup>
         <Label>Category</Label>
         <Select value={category} onChange={(event) => setCategory(event.target.value)}>
-          <option value="auto">Auto (AI)</option>
+          <option value="auto">Auto</option>
           {CATEGORIES.map((item) => (
             <option key={item} value={item}>
               {item}

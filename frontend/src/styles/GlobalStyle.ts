@@ -9,6 +9,8 @@ export const GlobalStyle = createGlobalStyle`
   html, body {
     margin: 0;
     padding: 0;
+    height: 100%;
+    overflow: hidden;
     font-family: var(--font-manrope);
     background-color: ${({ theme }) => theme.background};
     color: ${({ theme }) => theme.textPrimary};

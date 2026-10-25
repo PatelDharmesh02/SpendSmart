@@ -4,11 +4,12 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
+import { apiBaseUrl } from "@/lib/apiBase";
 import { AppError } from "./errorHandler";
 import { closeSession, isSessionClosed } from "@/lib/session";
 
 const instance: AxiosInstance = axios.create({
-  baseURL: "/api/v1",
+  baseURL: apiBaseUrl(),
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
