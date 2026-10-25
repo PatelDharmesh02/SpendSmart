@@ -23,7 +23,7 @@ def categorize_transaction_record(tx_id: str) -> None:
             category = predict_category(description, float(tx.amount))
             category, confidence = normalize_category(category)
             confidence = min(confidence, 0.55)
-            source = "ai"
+            source = "rules"
         tx.category = category
         tx.category_source = source
         tx.ai_confidence = confidence

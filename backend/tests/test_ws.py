@@ -7,7 +7,7 @@ def test_transaction_pushes_budget_snapshot(client):
     assert registered.status_code == 201
     with client.websocket_connect(f"/ws/v1/budget?ticket={ticket}") as socket:
         created = client.post(
-            "/api/v1/transactions/",
+            "/api/v1/transactions",
             json={
                 "amount": 25,
                 "category": "food",

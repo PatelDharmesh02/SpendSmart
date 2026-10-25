@@ -9,6 +9,8 @@ def publish_month(db, user_id, month: str, transaction=None) -> dict:
         "type": "budget_vs_actual",
         "month": snapshot["month"],
         "income": snapshot["income"],
+        "monthly_income": snapshot["monthly_income"],
+        "income_description": snapshot["income_description"],
         "expenses": snapshot["expenses"],
         "net": snapshot["net"],
         "savings_rate": snapshot["savings_rate"],

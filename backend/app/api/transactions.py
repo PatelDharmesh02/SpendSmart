@@ -42,7 +42,7 @@ def _apply_category(tx: Transaction, category: str) -> None:
         tx.tx_type = "income"
 
 
-@router.post("/", response_model=TransactionOut, status_code=201)
+@router.post("", response_model=TransactionOut, status_code=201)
 def create_transaction(
     tx: TransactionCreate,
     db: Session = Depends(get_db),
@@ -67,6 +67,8 @@ def create_transaction(
     publish_month(db, current_user.id, new_tx.date.strftime("%Y-%m"), new_tx)
     if new_tx.status == "pending":
         enqueue_categorize(str(new_tx.id))
+        db.expire(new_tx)
+        db.refresh(new_tx)
     return new_tx
 
 
@@ -121,7 +123,7 @@ def import_transactions(
     return {"message": f"Imported {created} transactions"}
 
 
-@router.get("/", response_model=TransactionPage)
+@router.get("", response_model=TransactionPage)
 def get_transactions(
     month: str | None = Query(None),
     page: int = Query(1, ge=1),
@@ -198,6 +200,8 @@ def update_transaction(
     publish_month(db, current_user.id, tx.date.strftime("%Y-%m"), tx)
     if tx.status == "pending":
         enqueue_categorize(str(tx.id))
+        db.expire(tx)
+        db.refresh(tx)
     return tx
 
 

@@ -1,10 +1,11 @@
 from fastapi import APIRouter
 
-from app.api import ai, auth, budgets, dashboard, goals, transactions
+from app.api import ai, auth, budgets, dashboard, goals, income, transactions
 
 router = APIRouter()
 router.include_router(auth.router, prefix="/auth", tags=["auth"])
 router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
+router.include_router(income.router, prefix="/income", tags=["income"])
 router.include_router(budgets.router, prefix="/budgets", tags=["budgets"])
 router.include_router(transactions.router, prefix="/transactions", tags=["transactions"])
 router.include_router(goals.router, prefix="/goals", tags=["goals"])

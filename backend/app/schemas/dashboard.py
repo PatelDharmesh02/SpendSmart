@@ -35,6 +35,8 @@ class GoalRead(BaseModel):
 class DashboardOut(BaseModel):
     month: str
     income: float
+    monthly_income: float | None = None
+    income_description: str | None = None
     expenses: float
     net: float
     savings_rate: float

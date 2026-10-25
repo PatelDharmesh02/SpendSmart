@@ -43,7 +43,11 @@ def regenerate_summary(
     db.add(job)
     db.commit()
     db.refresh(job)
-    enqueue_insight(str(current_user.id), month, str(job.id))
+    try:
+        enqueue_insight(str(current_user.id), month, str(job.id))
+    except Exception:
+        pass
+    db.expire(job)
     db.refresh(job)
     return job
 

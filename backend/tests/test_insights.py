@@ -12,7 +12,7 @@ def test_cached_insight_does_not_call_openai(client, monkeypatch):
     _auth(client)
     user_id = client.get("/api/v1/auth/me").json()["id"]
     client.post(
-        "/api/v1/transactions/",
+        "/api/v1/transactions",
         json={
             "amount": 40,
             "category": "food",
