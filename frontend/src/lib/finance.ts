@@ -28,8 +28,8 @@ export const CATEGORIES = [
 ];
 
 export function startOAuth(provider: "google" | "github") {
-  // The provider sends the browser back to the API host, so this navigation
-  // has to start there too. The session cookie for that hop lives on the API.
+  // The provider is registered to return to the API host. That response
+  // redirects back here with a one-time code, which the app trades for cookies.
   window.location.href = `${apiProxyTarget()}/api/v1/auth/oauth/${provider}`;
 }
 

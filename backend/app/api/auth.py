@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import func
@@ -10,9 +12,15 @@ from app.core.oauth import oauth
 from app.core.security import hash_password, verify_password
 from app.db.deps import get_db
 from app.models.user import User
-from app.schemas.auth import AuthResponse, UserLogin, UserPublic, UserRegister, WsTicket
+from app.schemas.auth import AuthResponse, OAuthComplete, UserLogin, UserPublic, UserRegister, WsTicket
 from app.services.oauth_users import upsert_oauth_user
-from app.services.sessions import clear_auth_cookies, issue_session, revoke_refresh, rotate_refresh
+from app.services.sessions import (
+    clear_auth_cookies,
+    issue_oauth_handoff,
+    issue_session,
+    revoke_refresh,
+    rotate_refresh,
+)
 
 router = APIRouter()
 
@@ -127,6 +135,15 @@ async def oauth_callback(provider: str, request: Request, db: Session = Depends(
     if not email or not provider_id:
         raise HTTPException(status_code=400, detail="Provider did not return an email address")
     user = upsert_oauth_user(db, email=email, name=name, provider=provider, provider_id=provider_id)
-    response = RedirectResponse(f"{settings.frontend_origin}/dashboard")
-    issue_session(response, db, user)
-    return response
+    # The provider returns to this API host. A cookie set here would not be sent
+    # on later calls from the frontend host, so the browser trades this code there.
+    code = issue_oauth_handoff(db, user)
+    return RedirectResponse(f"{settings.frontend_origin}/auth/oauth/complete#code={quote(code)}")
+
+
+@router.post("/oauth/complete")
+def oauth_complete(body: OAuthComplete, db: Session = Depends(get_db)):
+    user = rotate_refresh(db, body.code)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sign-in expired")
+    return _auth_response(db, user)

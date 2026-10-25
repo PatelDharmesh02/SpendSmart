@@ -68,7 +68,7 @@ const rawBaseQuery = fetchBaseQuery({
   credentials: "include",
 });
 
-const AUTH_FREE = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"];
+const AUTH_FREE = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout", "/auth/oauth/complete"];
 
 function requestUrl(args: string | FetchArgs) {
   return typeof args === "string" ? args : args.url;
@@ -147,6 +147,14 @@ export const spendApi = createApi({
     }),
     register: builder.mutation<AuthPayload, { name: string; email: string; password: string }>({
       query: (body) => ({ url: "/auth/register", method: "POST", body }),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        const { data } = await queryFulfilled;
+        openSession();
+        dispatch(loginUser(data.user));
+      },
+    }),
+    completeOAuth: builder.mutation<AuthPayload, { code: string }>({
+      query: (body) => ({ url: "/auth/oauth/complete", method: "POST", body }),
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
         openSession();
@@ -241,6 +249,7 @@ export const {
   useGetMeQuery,
   useLoginMutation,
   useRegisterMutation,
+  useCompleteOAuthMutation,
   useLogoutMutation,
   useLazyGetWsTicketQuery,
   useGetDashboardQuery,

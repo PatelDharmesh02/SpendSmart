@@ -26,6 +26,10 @@ class UserLogin(BaseModel):
     password: str
 
 
+class OAuthComplete(BaseModel):
+    code: str = Field(min_length=20)
+
+
 class AuthResponse(BaseModel):
     user: UserPublic
     access_token: str
